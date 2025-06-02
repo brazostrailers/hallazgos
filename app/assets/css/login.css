@@ -1,0 +1,52 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.login-bg {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #232526 0%, #414345 100%);
+}
+
+.login-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 2.5rem 2rem;
+  max-width: 370px;
+  width: 100%;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+}
+
+.logo-industrial {
+  display: block;
+  margin: 0 auto 1.5rem auto;
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  filter: grayscale(0.2) contrast(1.2);
+}
+
+.login-title {
+  font-weight: 700;
+  color: #232526;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.show-pass-btn {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0 6px;
+  z-index: 2;
+}
+
+@media (max-width: 400px) {
+  .login-card {
+    padding: 1.5rem 0.5rem;
+  }
+}

@@ -1,0 +1,24 @@
+body {
+  background: linear-gradient(135deg, #232526 0%, #414345 100%);
+  min-height: 100vh;
+}
+.card {
+  border-radius: 18px;
+}
+.card-title {
+  font-weight: 700;
+  color: #232526;
+  letter-spacing: 1px;
+}
+.form-label {
+  font-weight: 500;
+}
+.btn-primary {
+  background: #007bff;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.btn-primary:hover {
+  background: #0056b3;
+}
