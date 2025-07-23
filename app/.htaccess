@@ -1,0 +1,59 @@
+# Configuración para mejorar compatibilidad con dispositivos móviles Android
+# Actualizado para archivos grandes (10 fotos de 5MB cada una)
+
+# Tamaño máximo de archivos para Android (100MB total)
+php_value upload_max_filesize 15M
+php_value post_max_size 120M
+php_value max_file_uploads 20
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value memory_limit 512M
+
+# Headers CORS más permisivos para Android
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, X-Android-App, X-Android-Version, X-Test-Mode, X-Test-With-Files, Cache-Control, Accept"
+    Header always set Access-Control-Allow-Credentials "true"
+    Header always set Access-Control-Max-Age "86400"
+    
+    # Headers específicos para dispositivos móviles
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Optimizaciones para Android con archivos grandes
+    Header always set Cache-Control "no-cache, no-store, must-revalidate" env=ANDROID_REQUEST
+    Header always set Pragma "no-cache" env=ANDROID_REQUEST
+    Header always set Expires "0" env=ANDROID_REQUEST
+</IfModule>
+
+# Manejar peticiones OPTIONS para CORS preflight
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^(.*)$ $1 [R=200,L]
+</IfModule>
+
+# Configuración de tipos MIME para dispositivos móviles
+<IfModule mod_mime.c>
+    AddType application/json .json
+    AddType text/javascript .js
+    AddType text/css .css
+</IfModule>
+
+# Optimizaciones de red para dispositivos móviles lentos
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 day"
+    ExpiresByType application/javascript "access plus 1 day"
+    ExpiresByType text/javascript "access plus 1 day"
+    ExpiresByType image/png "access plus 1 week"
+    ExpiresByType image/jpg "access plus 1 week"
+    ExpiresByType image/jpeg "access plus 1 week"
+    ExpiresByType image/gif "access plus 1 week"
+</IfModule>
+
+# Configuración específica para Android
+<IfModule mod_setenvif.c>
+    SetEnvIf User-Agent "Android" ANDROID_REQUEST
+</IfModule>

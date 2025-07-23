@@ -11,6 +11,12 @@
   <div class="login-bg d-flex align-items-center justify-content-center">
     <div class="login-card shadow">
       <img src="assets/img/Logo.jpg" alt="Industria" class="logo-industrial mb-3">
+      <?php if (isset($_GET['logout']) && $_GET['logout'] === 'success'): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle"></i> Sesión cerrada exitosamente
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      <?php endif; ?>
       <center><button type="button" id="traducirLogin" class="btn btn-outline-secondary btn-sm mb-3">Traducir al Inglés</button></center>
       <h2 class="login-title mb-4">Acceso Hallazgos</h2>
       <form action="login.php" method="POST" autocomplete="off">
@@ -27,6 +33,7 @@
       </form>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="assets/js/login.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.js"></script>
 </body>

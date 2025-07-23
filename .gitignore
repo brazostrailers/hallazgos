@@ -1,0 +1,45 @@
+# Archivos de uploads (evidencias)
+app/uploads/*.png
+app/uploads/*.jpg
+app/uploads/*.jpeg
+app/uploads/*.gif
+app/uploads/*.webp
+
+# Mantener el directorio uploads pero no las imágenes
+app/uploads/*
+!app/uploads/.gitkeep
+
+# Archivos de log
+*.log
+app/*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de configuración local
+.env
+.env.local
+
+# Archivos de cache
+*.cache
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Node modules (si los hay)
+node_modules/
+
+# Archivos de Docker runtime
+.docker/
+
+# Archivos de backup
+*.bak
+*.backup
