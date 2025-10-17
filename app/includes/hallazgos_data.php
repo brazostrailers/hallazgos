@@ -23,7 +23,8 @@ try {
     $sql = "SELECT h.*, u.nombre as usuario_nombre,
                    GROUP_CONCAT(DISTINCT hd.defecto ORDER BY hd.defecto SEPARATOR ', ') as defectos,
                    COUNT(DISTINCT hd.id) as total_defectos,
-                   COUNT(DISTINCT he.id) as total_evidencias
+                   COUNT(DISTINCT he.id) as total_evidencias,
+                   h.cantidad_piezas
             FROM hallazgos h 
             LEFT JOIN usuarios u ON h.id_usuario = u.id 
             LEFT JOIN hallazgos_defectos hd ON h.id = hd.hallazgo_id
@@ -48,6 +49,8 @@ try {
             $sql .= " AND h.estado != 'cuarentena'";
         } elseif ($estado === 'activo,inactivo') {
             $sql .= " AND h.estado IN ('activo', 'inactivo')";
+        } elseif ($estado === 'activo,inactivo,cerrada') { // NUEVO: incluir cerradas en el listado principal
+            $sql .= " AND h.estado IN ('activo','inactivo','cerrada')";
         } else {
             $sql .= " AND h.estado = ?";
             $params[] = $estado;

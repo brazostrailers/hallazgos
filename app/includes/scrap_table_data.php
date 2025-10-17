@@ -12,15 +12,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once 'db_config.php';
 
 try {
-    // Consulta completa para obtener registros en scrap con información de scrap_records
+    // Consulta basada en scrap_records (1 fila por registro de scrap) para evitar duplicados
     $sql = "SELECT 
-                h.id,
+                h.id AS id,                 -- mantener nombre 'id' para frontend (hallazgo)
+                sr.id AS scrap_id,          -- id del registro de scrap
                 h.fecha_creacion,
                 h.area_ubicacion,
                 h.modelo,
                 h.no_parte,
                 h.job_order,
                 h.estacion,
+                h.cantidad_piezas,
                 u.nombre as usuario_nombre,
                 COALESCE(defectos_count.total, 0) as total_defectos,
                 COALESCE(evidencias_count.total, 0) as total_evidencias,
@@ -28,7 +30,8 @@ try {
                 sr.precio as valor_scrap,
                 sr.no_ensamble,
                 sr.observaciones as scrap_observaciones
-            FROM hallazgos h
+            FROM scrap_records sr
+            LEFT JOIN hallazgos h ON sr.hallazgo_id = h.id
             LEFT JOIN usuarios u ON h.id_usuario = u.id
             LEFT JOIN (
                 SELECT hallazgo_id, COUNT(*) as total 
@@ -40,9 +43,7 @@ try {
                 FROM hallazgos_evidencias 
                 GROUP BY hallazgo_id
             ) evidencias_count ON h.id = evidencias_count.hallazgo_id
-            LEFT JOIN scrap_records sr ON h.id = sr.hallazgo_id
-            WHERE h.estado = 'scrap'
-            ORDER BY h.fecha_creacion DESC";
+            ORDER BY sr.fecha_scrap DESC, sr.id DESC";
 
     $result = $mysqli->query($sql);
     

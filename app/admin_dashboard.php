@@ -16,10 +16,137 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Administrativo - Sistema de Calidad</title>
+    <meta name="theme-color" content="#667eea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json" crossorigin="anonymous">
+    <link rel="apple-touch-icon" href="assets/img/Logo.jpg">
+    <link rel="icon" sizes="192x192" href="assets/img/Logo.jpg" type="image/jpeg">
+    <link rel="icon" sizes="512x512" href="assets/img/Logo.jpg" type="image/jpeg">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="assets/css/admin-dashboard.css" rel="stylesheet">
     <style>
+        /* Estilos para Cards de Estadísticas Modernas */
+        .stat-card-modern {
+            border: none;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .stat-card-modern:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1) !important;
+        }
+        
+        /* Bordes coloridos en las cards */
+        .border-left-primary {
+            border-left: 5px solid #4e73df !important;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e3ebff 100%);
+        }
+        .border-left-success {
+            border-left: 5px solid #1cc88a !important;
+            background: linear-gradient(135deg, #f0fff4 0%, #dcf8e5 100%);
+        }
+        .border-left-warning {
+            border-left: 5px solid #f6c23e !important;
+            background: linear-gradient(135deg, #fffbf0 0%, #fff2cc 100%);
+        }
+        .border-left-danger {
+            border-left: 5px solid #e74a3b !important;
+            background: linear-gradient(135deg, #fef8f8 0%, #fce4e4 100%);
+        }
+        .border-left-info {
+            border-left: 5px solid #36b9cc !important;
+            background: linear-gradient(135deg, #f0fdff 0%, #d1ecf1 100%);
+        }
+        .border-left-secondary {
+            border-left: 5px solid #858796 !important;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        /* Iconos grandes en las cards */
+        .stat-icon-large {
+            font-size: 2.5rem;
+            opacity: 0.3;
+            transition: all 0.3s ease;
+        }
+        .stat-card-modern:hover .stat-icon-large {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+        
+        /* Iconos pequeños junto al texto */
+        .stat-icon-small {
+            font-size: 0.9rem;
+        }
+
+        /* Texto de estadísticas */
+        .text-xs {
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+        .text-gray-800 {
+            color: #5a5c69 !important;
+        }
+        .text-gray-300 {
+            color: #dddfeb !important;
+        }
+
+        /* Colores personalizados para texto */
+        .text-primary {
+            color: #4e73df !important;
+        }
+        .text-success {
+            color: #1cc88a !important;
+        }
+        .text-warning {
+            color: #f6c23e !important;
+        }
+        .text-danger {
+            color: #e74a3b !important;
+        }
+        .text-info {
+            color: #36b9cc !important;
+        }
+        .text-secondary {
+            color: #858796 !important;
+        }
+
+        /* Estilos para barras de progreso */
+        .progress-sm {
+            height: 0.5rem;
+        }
+        .progress {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+
+        /* Sistema de grid sin gutters */
+        .no-gutters {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        .no-gutters > .col,
+        .no-gutters > [class*="col-"] {
+            padding-right: 0;
+            padding-left: 0;
+        }
+
+        /* Animación de contadores */
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .h5 {
+            animation: countUp 0.5s ease-out;
+        }
+
         .defectos-clickeable:hover {
             transform: scale(1.1);
             transition: transform 0.2s ease;
@@ -75,6 +202,35 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
         .table td:last-child {
             min-width: 220px;
         }
+        
+        /* Estilos para la gráfica de estaciones */
+        .border-left-danger {
+            border-left: 0.25rem solid #e74a3b !important;
+        }
+        .shadow-sm {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+        }
+        .text-xs {
+            font-size: 0.75rem;
+        }
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+        .text-gray-800 {
+            color: #5a5c69 !important;
+        }
+        .text-gray-300 {
+            color: #dddfeb !important;
+        }
+        .no-gutters {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        .no-gutters > .col,
+        .no-gutters > [class*="col-"] {
+            padding-right: 0;
+            padding-left: 0;
+        }
     </style>
 </head>
 <body>
@@ -86,6 +242,14 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                 Sistema de Calidad - Admin
             </a>
             <div class="navbar-nav ms-auto">
+                <a href="scrap_dashboard.php" class="btn btn-outline-danger btn-sm me-2">
+                    <i class="fas fa-trash me-1"></i>
+                    Scrap
+                </a>
+                <a href="historico.php" class="btn btn-outline-secondary btn-sm me-2">
+                    <i class="fas fa-history me-1"></i>
+                    Histórico
+                </a>
                 <span class="navbar-text me-3">
                     <i class="fas fa-user-circle me-1"></i>
                     Bienvenido, <?php echo htmlspecialchars($user_name); ?>
@@ -106,7 +270,7 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                 Dashboard Administrativo
             </h1>
             <p class="page-subtitle">
-                Monitoreo y análisis de hallazgos de calidad en tiempo real
+                Monitoreo y análisis de registros de calidad 
             </p>
         </div>
 
@@ -164,33 +328,259 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
             </div>
         </div>
 
-        <!-- Stats Cards -->
+        <!-- Stats Cards Mejoradas -->
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stat-card primary">
-                    <div class="stat-number" id="totalRegistros">0</div>
-                    <div class="stat-label">Total de Registros</div>
+            <!-- Total de Registros -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total de Registros
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="totalRegistros">0</span>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center">
+                                    <div class="stat-icon-small text-primary me-2">
+                                        <i class="fas fa-cubes"></i>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span id="totalPiezas" class="font-weight-bold text-primary">0</span> piezas procesadas
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-primary">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card success">
-                    <div class="stat-number" id="registrosConHallazgos">0</div>
-                    <div class="stat-label">Registros con Hallazgos</div>
+
+            <!-- Registros con Defectos -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Con Registros
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="registrosConHallazgos">0</span>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center">
+                                    <div class="stat-icon-small text-success me-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span id="piezasDefectuosas" class="font-weight-bold text-success">0</span> piezas defectuosas
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-success">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card warning">
-                    <div class="stat-number" id="registrosRetrabajo">0</div>
-                    <div class="stat-label">Registros con Retrabajo</div>
+
+            <!-- Registros con Retrabajo -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    En Retrabajo
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="registrosRetrabajo">0</span>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center">
+                                    <div class="stat-icon-small text-warning me-2">
+                                        <i class="fas fa-redo"></i>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span id="piezasRetrabajo" class="font-weight-bold text-warning">0</span> piezas en retrabajo
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-warning">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-card danger">
-                    <div class="stat-number" id="registrosCuarentena">0</div>
-                    <div class="stat-label">Registros en Cuarentena</div>
+
+            <!-- Registros en Cuarentena -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-danger shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    En Cuarentena
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="registrosCuarentena">0</span>
+                                </div>
+                                <div class="mt-2 d-flex align-items-center">
+                                    <div class="stat-icon-small text-danger me-2">
+                                        <i class="fas fa-pause"></i>
+                                    </div>
+                                    <div class="small text-muted">
+                                        <span id="piezasCuarentena" class="font-weight-bold text-danger">0</span> piezas en cuarentena
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-danger">
+                                    <i class="fas fa-ban"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- Cards de Métricas Adicionales -->
+        <div class="row mb-4">
+            <!-- Porcentaje de Piezas Defectuosas -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-info shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    % Piezas Defectuosas
+                                </div>
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col-auto">
+                                        <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">
+                                            <span id="porcentajeDefectuosas">0</span>%
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <div class="progress progress-sm mr-2">
+                                            <div class="progress-bar bg-info" role="progressbar" 
+                                                 id="progressDefectuosas" style="width: 0%" 
+                                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-info">
+                                    <i class="fas fa-percentage"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Promedio de Piezas por Hallazgo -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-secondary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
+                                    Promedio por Hallazgo
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="promedioPiezas">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-muted">
+                                        <i class="fas fa-calculator me-1"></i>
+                                        piezas por registro
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-secondary">
+                                    <i class="fas fa-calculator"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Eficiencia (Piezas OK) -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-success shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Piezas Sin Defectos
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="piezasOK">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-success font-weight-bold">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        <span id="porcentajeOK">0</span>% eficiencia
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-success">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tendencia -->
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card stat-card-modern border-left-warning shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Tendencia Semanal
+                                </div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    <span id="tendenciaValor">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small" id="tendenciaTexto">
+                                        <i class="fas fa-chart-line me-1"></i>
+                                        <span>Sin datos</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="stat-icon-large text-warning">
+                                    <i class="fas fa-chart-line" id="tendenciaIcon"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Meta de Scrap Mensual movida a scrap_dashboard.php -->
 
         <!-- Gráficos de Análisis -->
         <div class="row mb-4">
@@ -198,48 +588,52 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                 <div class="card dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-chart-bar me-2"></i>
-                        Análisis de Hallazgos por Categorías
+                        Análisis de Registros y Piezas Afectadas por Categorías
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <!-- Áreas con más hallazgos -->
+                            <!-- Áreas con más registros -->
                             <div class="col-md-6 mb-4">
                                 <h6 class="chart-title">
                                     <i class="fas fa-map-marker-alt me-2"></i>
-                                    Áreas con Más Hallazgos
+                                    Áreas: Piezas Afectadas (Registros)
+                                    <small class="text-muted ms-2">(Ordenado por total de piezas)</small>
                                 </h6>
                                 <div class="chart-container">
                                     <canvas id="chartAreas"></canvas>
                                 </div>
                             </div>
                             
-                            <!-- Modelos con más hallazgos -->
+                            <!-- Modelos con más registros -->
                             <div class="col-md-6 mb-4">
                                 <h6 class="chart-title">
                                     <i class="fas fa-cog me-2"></i>
-                                    Modelos con Más Hallazgos
+                                    Modelos: Impacto por Piezas Defectuosas
+                                    <small class="text-muted ms-2">(Ordenado por total de piezas)</small>
                                 </h6>
                                 <div class="chart-container">
                                     <canvas id="chartModelos"></canvas>
                                 </div>
                             </div>
                             
-                            <!-- Usuarios con más hallazgos reportados -->
+                            <!-- Usuarios con más registros reportados -->
                             <div class="col-md-6 mb-4">
                                 <h6 class="chart-title">
                                     <i class="fas fa-users me-2"></i>
-                                    Usuarios con Más Hallazgos Reportados
+                                    Usuarios: Eficiencia en Identificación de Piezas
+                                    <small class="text-muted ms-2">(Ordenado por piezas identificadas)</small>
                                 </h6>
                                 <div class="chart-container">
                                     <canvas id="chartUsuarios"></canvas>
                                 </div>
                             </div>
                             
-                            <!-- No. de parte con más hallazgos -->
+                            <!-- No. de parte con más registros -->
                             <div class="col-md-6 mb-4">
                                 <h6 class="chart-title">
                                     <i class="fas fa-barcode me-2"></i>
-                                    No. de Parte con Más Hallazgos
+                                    Partes: Impacto Real por No. de Parte
+                                    <small class="text-muted ms-2">(Ordenado por piezas afectadas)</small>
                                 </h6>
                                 <div class="chart-container">
                                     <canvas id="chartNoParte"></canvas>
@@ -250,37 +644,28 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                             <div class="col-md-6 mb-4">
                                 <h6 class="chart-title">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                    Defectos Más Reportados
+                                    Defectos: Impacto por Cantidad de Piezas
+                                    <small class="text-muted ms-2">(Ordenado por piezas afectadas)</small>
                                 </h6>
                                 <div class="chart-container">
                                     <canvas id="chartDefectos"></canvas>
                                 </div>
                             </div>
                             
-                            <!-- Dinero perdido en scrap -->
-                            <div class="col-md-6 mb-4">
-                                <h6 class="chart-title">
-                                    <i class="fas fa-dollar-sign me-2 text-danger"></i>
-                                    Dinero Perdido en Scrap
-                                    <small class="text-muted ms-2" id="totalDineroPerdido">$0.00</small>
-                                </h6>
-                                <div class="chart-container" style="height: 300px;">
-                                    <canvas id="chartScrap"></canvas>
-                                </div>
-                            </div>
+                            <!-- Gráficas de scrap movidas a scrap_dashboard.php -->
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Sección de Gestión de Hallazgos -->
+    <!-- Sección de Gestión de Registros -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card dashboard-card">
                     <div class="card-header">
                         <i class="fas fa-list-alt me-2"></i>
-                        Gestión de Hallazgos
+                        Gestión de Registros
                     </div>
                     <div class="card-body">
                         <!-- Filtros Mejorados para Gestión de Hallazgos -->
@@ -326,6 +711,7 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                         <option value="Vulcanizadora">🔴 Vulcanizadora</option>
                                         <option value="soldadura">🔗 Soldadura</option>
                                         <option value="ejes">🚛 Ejes</option>
+                                        <option value="Diseño">📐 Diseño</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
@@ -395,13 +781,14 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                 <table class="table table-hover" id="tablaRegistrosActivos">
                                     <thead class="table-dark">
                                         <tr>
-                                            <th>ID</th>
+                                            <th>No.</th>
                                             <th>Fecha</th>
                                             <th>Área</th>
                                             <th>Modelo</th>
                                             <th>No. Parte</th>
                                             <th>Job Order</th>
                                             <th>Usuario</th>
+                                            <th>Cantidad</th>
                                             <th>Retrabajo</th>
                                             <th>Defectos</th>
                                             <th>Evidencias</th>
@@ -410,7 +797,7 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                     </thead>
                                     <tbody id="tablaRegistrosActivosBody">
                                         <tr>
-                                            <td colspan="11" class="text-center">
+                                            <td colspan="12" class="text-center">
                                                 <div class="loading-table">
                                                     <i class="fas fa-spinner fa-spin me-2"></i>
                                                     Cargando registros...
@@ -443,13 +830,14 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                 <table class="table table-hover" id="tablaRegistrosCuarentena">
                                     <thead class="table-warning">
                                         <tr>
-                                            <th>ID</th>
+                                            <th>No.</th>
                                             <th>Fecha</th>
                                             <th>Área</th>
                                             <th>Modelo</th>
                                             <th>No. Parte</th>
                                             <th>Job Order</th>
                                             <th>Usuario</th>
+                                            <th>Cantidad</th>
                                             <th>Defectos</th>
                                             <th>Evidencias</th>
                                             <th>Acciones</th>
@@ -457,7 +845,7 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                     </thead>
                                     <tbody id="tablaRegistrosCuarentenaBody">
                                         <tr>
-                                            <td colspan="10" class="text-center">
+                                            <td colspan="11" class="text-center">
                                                 <div class="loading-table">
                                                     <i class="fas fa-spinner fa-spin me-2"></i>
                                                     Cargando registros en cuarentena...
@@ -490,13 +878,14 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                 <table class="table table-hover" id="tablaRegistrosScrap">
                                     <thead class="table-danger">
                                         <tr>
-                                            <th>ID</th>
+                                            <th>No.</th>
                                             <th>Fecha</th>
                                             <th>Área</th>
                                             <th>Modelo</th>
                                             <th>No. Parte</th>
                                             <th>Job Order</th>
                                             <th>Usuario</th>
+                                            <th>Cantidad</th>
                                             <th>Defectos</th>
                                             <th>Evidencias</th>
                                             <th>Fecha Scrap</th>
@@ -505,7 +894,7 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                                     </thead>
                                     <tbody id="tablaRegistrosScrapBody">
                                         <tr>
-                                            <td colspan="11" class="text-center">
+                                            <td colspan="12" class="text-center">
                                                 <div class="loading-table">
                                                     <i class="fas fa-spinner fa-spin me-2"></i>
                                                     Cargando registros en scrap...
@@ -637,6 +1026,48 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
         </div>
     </div>
 
+    <!-- Modal para Cerrar Hallazgo -->
+    <div class="modal fade" id="cerrarModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-lock me-2"></i>
+                        Cerrar Hallazgo #<span id="cerrarHallazgoId">-</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="cerrarFecha" class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i>
+                            Fecha de cierre
+                        </label>
+                        <input type="datetime-local" class="form-control" id="cerrarFecha">
+                        <small class="text-muted">Se llena automáticamente, pero puedes editarla.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cerrarSolucion" class="form-label">
+                            <i class="fas fa-comment-dots me-1"></i>
+                            Solución
+                        </label>
+                        <textarea class="form-control" id="cerrarSolucion" rows="4" placeholder="Describe la solución aplicada..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="confirmarCierre">
+                        <i class="fas fa-lock me-1"></i>
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de confirmación para cambios de estado -->
     <div class="modal fade" id="confirmModal" tabindex="-1">
         <div class="modal-dialog">
@@ -721,12 +1152,31 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
                             </div>
                         </div>
                         
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="scrapFecha" class="form-label">
+                                    <i class="fas fa-calendar-day me-1"></i>
+                                    Fecha de Scrap
+                                </label>
+                                <input type="date" class="form-control" id="scrapFecha" name="fecha_scrap">
+                                <small class="text-muted">Por defecto hoy. Puedes modificarla.</small>
+                            </div>
+                        </div>
+                        
                         <div class="mb-3">
                             <label for="scrapObservaciones" class="form-label">
                                 <i class="fas fa-comment me-1"></i>
                                 Observaciones
                             </label>
-                            <textarea class="form-control" id="scrapObservaciones" name="observaciones" rows="3" placeholder="Información adicional sobre el scrap..."></textarea>
+                            <select class="form-select" id="scrapObservaciones" name="observaciones" required>
+                                <option value="" selected disabled>Seleccione la observación</option>
+                                <option value="Cambio de Diseño - Error en el dibujo">Cambio de Diseño - Error en el dibujo</option>
+                                <option value="Mal corte">Mal corte</option>
+                                <option value="Mal doblez">Mal doblez</option>
+                                <option value="Mal ensamble">Mal ensamble</option>
+                                <option value="Pandeada">Pandeada</option>
+                            </select>
+                            <small class="text-muted">Selecciona el motivo por el que se enviará a scrap</small>
                         </div>
                     </form>
                 </div>
@@ -752,6 +1202,70 @@ $user_name = $_SESSION['usuario']['nombre'] ?? 'Encargado';
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script src="assets/js/admin-dashboard-clean.js"></script>
+    <script>
+        function fmtMoney(value) {
+            const n = Number(value || 0);
+            return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+        }
+
+        async function loadScrapGoal(year, month) {
+            try {
+                const now = new Date();
+                const y = year || now.getFullYear();
+                const m = month || (now.getMonth() + 1);
+                const res = await fetch(`includes/scrap_goal_api.php?year=${y}&month=${m}`, { credentials: 'same-origin' });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Error obteniendo meta');
+                const d = data.data;
+                const yearEl = document.getElementById('scrapGoalYear');
+                const monthEl = document.getElementById('scrapGoalMonth');
+                if (yearEl) yearEl.textContent = d.year;
+                if (monthEl) monthEl.textContent = String(d.month).padStart(2, '0');
+                const goalLabel = document.getElementById('scrapGoalLabel');
+                const accLabel = document.getElementById('scrapAccumulatedLabel');
+                const remLabel = document.getElementById('scrapRemainingLabel');
+                if (goalLabel) goalLabel.textContent = fmtMoney(d.goal);
+                if (accLabel) accLabel.textContent = fmtMoney(d.month_total);
+                if (remLabel) remLabel.textContent = fmtMoney(d.remaining);
+                const bar = document.getElementById('scrapGoalProgress');
+                if (bar) {
+                    bar.style.width = `${d.percent}%`;
+                    bar.setAttribute('aria-valuenow', d.percent);
+                }
+                const input = document.getElementById('scrapGoalInput');
+                if (input) input.value = d.goal || '';
+                const badge = document.getElementById('scrapExceededBadge');
+                if (badge) badge.style.display = d.exceeded ? 'block' : 'none';
+            } catch (e) {
+                console.error('Error loadScrapGoal:', e);
+            }
+        }
+
+        async function saveScrapGoal() {
+            const now = new Date();
+            const y = document.getElementById('scrapGoalYear')?.textContent || now.getFullYear();
+            const m = document.getElementById('scrapGoalMonth')?.textContent || (now.getMonth() + 1);
+            const amount = parseFloat(document.getElementById('scrapGoalInput')?.value || '0');
+            try {
+                const form = new FormData();
+                form.append('year', y);
+                form.append('month', m);
+                form.append('amount', amount);
+                const res = await fetch('includes/scrap_goal_api.php', { method: 'POST', body: form, credentials: 'same-origin' });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || '');
+                await loadScrapGoal(y, m);
+            } catch (e) {
+                console.error('Error saveScrapGoal:', e);
+                alert('No se pudo guardar la meta: ' + e.message);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadScrapGoal();
+        });
+    </script>
 </body>
 </html>

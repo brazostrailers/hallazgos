@@ -49,9 +49,6 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
   
   <!-- PWA y tema para Android -->
   <meta name="theme-color" content="#667eea">
-  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
-  <link rel="icon" sizes="192x192" href="assets/img/Logo.jpg" type="image/jpeg">
-  <link rel="icon" sizes="512x512" href="assets/img/Logo.jpg" type="image/jpeg">
   <meta name="apple-mobile-web-app-capable" content="no">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Usar desde Android">
@@ -85,7 +82,18 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
       <h1 class="app-title">Sistema de Hallazgos</h1>
       <p class="app-subtitle">Registro de calidad móvil - Bienvenido, <?php echo htmlspecialchars($user_name); ?></p>
       <div class="header-actions">
-        <!-- Botones de pruebas y debug removidos -->
+        <button type="button" id="testAndroidBtn" class="btn btn-warning me-2" onclick="testAndroidConnection()" style="display: none;">
+          🤖 Test Conexión
+        </button>
+        <button type="button" id="testConfigBtn" class="btn btn-secondary me-2" onclick="testAndroidConfig()" style="display: none;">
+          🔧 Test Config
+        </button>
+        <button type="button" id="testFormBtn" class="btn btn-info me-2" onclick="testAndroidFormSubmit()" style="display: none;">
+          🧪 Test Form
+        </button>
+        <button type="button" id="testFilesBtn" class="btn btn-success me-2" onclick="testAndroidFormWithFiles()" style="display: none;">
+          📁 Test Files
+        </button>
         <button type="button" id="traducirBtn" class="btn translate-btn">
           🌐 <span id="translateText">English</span>
         </button>
@@ -124,7 +132,6 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
               <option value="Vulcanizadora">Vulcanizadora</option>
               <option value="soldadura">Soldadura</option>
               <option value="ejes">Ejes</option>
-              <option value="Diseño">Diseño</option>
             </select>
             <div class="invalid-feedback"><span data-translate="selectAreaError">Por favor selecciona un área</span></div>
           </div>
@@ -211,16 +218,9 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
           <!-- Subida de Archivos Mejorada -->
           <div class="form-section">
             <label class="form-label">📸 <span data-translate="photos">Fotos</span> (<span data-translate="evidence">Evidencias</span>) - <span class="text-muted" data-translate="optional">Opcional</span></label>
-            <!-- Controles rápidos de Cámara y Galería -->
-            <div class="d-flex gap-2 mb-2">
-              <button type="button" class="btn btn-outline-primary flex-fill" id="btnTakePhoto">📷 Tomar foto</button>
-              <button type="button" class="btn btn-outline-secondary flex-fill" id="btnGallery">🖼️ Galería</button>
-            </div>
-            <!-- Input oculto dedicado a cámara -->
-            <input type="file" id="evidencias_camera" accept="image/*" capture="environment" style="position:absolute; left:-9999px; width:1px; height:1px; opacity:0;" />
             <div class="file-upload-area" id="fileUploadArea">
               <div class="file-upload-icon">📷</div>
-              <div class="file-upload-text" data-translate="tapToAddPhotos">Toca para agregar fotos</div>
+              <div class="file-upload-text" data-translate="tapToAddPhotos">Toca para agregar fotos (opcional)</div>
               <div class="file-upload-hint" data-translate="photoLimits">Hasta 10 fotos • Máximo 15MB cada una • Las fotos se van agregando</div>
               <input type="file" name="evidencias[]" id="evidencias" accept="image/*" multiple class="file-input-hidden">
             </div>
@@ -245,6 +245,13 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
   </div>
 
   <script>
+    // Mostrar botones de prueba solo en Android
+    if (/Android/.test(navigator.userAgent)) {
+      document.getElementById('testAndroidBtn').style.display = 'inline-block';
+      document.getElementById('testConfigBtn').style.display = 'inline-block';
+      document.getElementById('testFormBtn').style.display = 'inline-block';
+      document.getElementById('testFilesBtn').style.display = 'inline-block';
+    }
     
     // Función para alternar modo debug
     function toggleDebugMode() {
@@ -266,154 +273,6 @@ Session Data: <?php echo print_r($_SESSION['usuario'] ?? 'No session', true); ?>
         window.location.href = 'logout.php';
       }
     }
-    // Traducción ES/EN: Diccionario, estado, y aplicación a elementos con data-translate
-    (function() {
-      const translations = {
-        es: {
-          date: 'Fecha',
-          selectDate: 'Por favor selecciona una fecha',
-          area: 'Área',
-          selectArea: 'Selecciona un área',
-          selectAreaError: 'Por favor selecciona un área',
-          station: 'Estación',
-          selectStation: 'Selecciona una estación',
-          selectStationError: 'Por favor selecciona una estación',
-          assemblyNumber: 'Número de Ensamble',
-          enterAssemblyNumber: 'Ingresa el número de ensamble',
-          enterAssemblyNumberError: 'Por favor ingresa el número de ensamble',
-          model: 'Modelo',
-          autoFill: 'Se autocompletará',
-          selectModelError: 'Por favor selecciona un modelo',
-          jobOrder: 'Job Order',
-          optional: 'Opcional',
-          partNumber: 'Número de Parte',
-          pieceQuantity: 'Cantidad de Piezas',
-          quantity: 'Cantidad',
-          quantityHelp: 'Por defecto: 1 pieza. Mínimo: 1',
-          validQuantityError: 'Por favor ingresa una cantidad válida (mínimo 1)',
-          defects: 'Defectos',
-          selectDefects: 'Selecciona uno o más defectos',
-          selectDefectsError: 'Por favor selecciona al menos un defecto',
-          observations: 'Observaciones',
-          describeDetails: 'Describe los detalles',
-          addObservationsError: 'Por favor agrega observaciones',
-          rework: 'Retrabajo',
-          select: 'Selecciona',
-          yes: 'Sí',
-          no: 'No',
-          photos: 'Fotos',
-          evidence: 'Evidencias',
-          tapToAddPhotos: 'Toca para agregar fotos',
-          photoLimits: 'Hasta 10 fotos • Máximo 15MB cada una • Las fotos se van agregando',
-          addPhotoError: 'Error al procesar las fotos',
-          submitFinding: 'Registrar Hallazgo'
-        },
-        en: {
-          date: 'Date',
-          selectDate: 'Please select a date',
-          area: 'Area',
-          selectArea: 'Select an area',
-          selectAreaError: 'Please select an area',
-          station: 'Station',
-          selectStation: 'Select a station',
-          selectStationError: 'Please select a station',
-          assemblyNumber: 'Assembly Number',
-          enterAssemblyNumber: 'Enter the assembly number',
-          enterAssemblyNumberError: 'Please enter the assembly number',
-          model: 'Model',
-          autoFill: 'Auto-fill',
-          selectModelError: 'Please select a model',
-          jobOrder: 'Job Order',
-          optional: 'Optional',
-          partNumber: 'Part Number',
-          pieceQuantity: 'Piece Quantity',
-          quantity: 'Quantity',
-          quantityHelp: 'Default: 1 piece. Minimum: 1',
-          validQuantityError: 'Please enter a valid quantity (minimum 1)',
-          defects: 'Defects',
-          selectDefects: 'Select one or more defects',
-          selectDefectsError: 'Please select at least one defect',
-          observations: 'Observations',
-          describeDetails: 'Describe details',
-          addObservationsError: 'Please add observations',
-          rework: 'Rework',
-          select: 'Select',
-          yes: 'Yes',
-          no: 'No',
-          photos: 'Photos',
-          evidence: 'Evidence',
-          tapToAddPhotos: 'Tap to add photos',
-          photoLimits: 'Up to 10 photos • Max 15MB each • Photos will be added',
-          addPhotoError: 'Error processing photos',
-          submitFinding: 'Submit Finding'
-        }
-      };
-
-      // Estado global simple
-      window.currentLang = 'es';
-
-      function applyTranslations() {
-        const dict = translations[window.currentLang] || translations.es;
-        // Todos los textos con data-translate
-        document.querySelectorAll('[data-translate]').forEach(el => {
-          const key = el.getAttribute('data-translate');
-          if (key && dict[key]) {
-            el.textContent = dict[key];
-          }
-        });
-        // Placeholders
-        document.querySelectorAll('[data-translate-placeholder]').forEach(el => {
-          const key = el.getAttribute('data-translate-placeholder');
-          if (key && dict[key] && 'placeholder' in el) {
-            el.placeholder = dict[key];
-          }
-        });
-        // Ajustar placeholder del selector de defectos cuando está vacío
-        const defectDisplay = document.getElementById('defectDisplay');
-        if (defectDisplay && defectDisplay.querySelector('.multi-select-placeholder')) {
-          defectDisplay.querySelector('.multi-select-placeholder').textContent = dict.selectDefects;
-        }
-      }
-
-      // Inicializar
-      const btn = document.getElementById('traducirBtn');
-      const span = document.getElementById('translateText');
-      if (span) span.textContent = 'English'; // botón muestra el idioma contrario al actual (ES)
-      applyTranslations();
-
-      btn?.addEventListener('click', function() {
-        // Alternar idioma
-        window.currentLang = (window.currentLang === 'es') ? 'en' : 'es';
-        // El botón SIEMPRE muestra el idioma contrario al actual
-        if (span) span.textContent = (window.currentLang === 'es') ? 'English' : 'Español';
-        // Aplicar traducciones
-        applyTranslations();
-      });
-    })();
-
-    // Configurar botones de Cámara/Galería para alimentar al FileManager existente
-    (function() {
-      const btnTake = document.getElementById('btnTakePhoto');
-      const btnGal = document.getElementById('btnGallery');
-      const inputCam = document.getElementById('evidencias_camera');
-      const inputGal = document.getElementById('evidencias');
-
-      if (btnTake && inputCam) {
-        btnTake.addEventListener('click', () => inputCam.click());
-      }
-      if (btnGal && inputGal) {
-        btnGal.addEventListener('click', () => inputGal.click());
-      }
-      if (inputCam) {
-        inputCam.addEventListener('change', (e) => {
-          if (window.fileManager && e.target.files?.length) {
-            window.fileManager.handleFileSelection(e.target.files);
-          }
-          // Permitir volver a tomar la misma foto si se desea
-          e.target.value = '';
-        });
-      }
-    })();
   </script>
 
   <!-- Scripts -->

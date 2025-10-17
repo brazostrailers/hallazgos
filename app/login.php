@@ -26,10 +26,20 @@ try {
     if ($user = $result->fetch_assoc()) {
         $_SESSION['usuario'] = $user;
         
+        // Redirigir según el tipo de usuario
         if ($user['rol'] === 'encargado') {
             header('Location: admin_dashboard.php');
             exit;
+        } elseif ($user['rol'] === 'usa') {
+            // Usuarios de calidad USA van al formulario USA
+            header('Location: usa/registro_usa.php');
+            exit;
+        } elseif ($user['rol'] === 'encargadousa') {
+            // Encargado USA va al dashboard de calidad USA
+            header('Location: usa/calidadusa.php');
+            exit;
         } else {
+            // Otros usuarios de calidad van al dashboard normal
             header('Location: dashboard.php');
             exit;
         }

@@ -62,36 +62,38 @@ try {
     $stmt->execute();
     $totalData = $stmt->get_result()->fetch_assoc();
     
-    // 2. Datos para gráfica temporal
-    $timeGrouping = '';
-    $timeFormat = '';
+    // 2. Datos para gráfica temporal (cumpliendo ONLY_FULL_GROUP_BY)
+    $groupExpr = '';
+    $labelExpr = '';
     
     switch ($tipo_grafica) {
         case 'diario':
-            $timeGrouping = "DATE(sr.fecha_scrap)";
-            $timeFormat = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m-%d')";
+            $groupExpr = "DATE(sr.fecha_scrap)";
+            $labelExpr = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m-%d')";
             break;
         case 'semanal':
-            $timeGrouping = "YEARWEEK(sr.fecha_scrap, 1)";
-            $timeFormat = "CONCAT('Semana ', WEEK(sr.fecha_scrap, 1), ' - ', YEAR(sr.fecha_scrap))";
+            // Clave de agrupación por año-semana y etiqueta amigable
+            $groupExpr = "YEARWEEK(sr.fecha_scrap, 1)";
+            $labelExpr = "CONCAT('Semana ', WEEK(sr.fecha_scrap, 1), ' - ', YEAR(sr.fecha_scrap))";
             break;
         case 'mensual':
         default:
-            $timeGrouping = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m')";
-            $timeFormat = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m')";
+            $groupExpr = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m')";
+            $labelExpr = "DATE_FORMAT(sr.fecha_scrap, '%Y-%m')";
             break;
     }
     
     $temporalSql = "SELECT 
-                        $timeFormat as periodo,
+                        $groupExpr as periodo_key,
+                        $labelExpr as periodo,
                         COUNT(*) as cantidad_registros,
                         SUM(sr.precio) as total_periodo,
                         AVG(sr.precio) as promedio_periodo
                     FROM scrap_records sr
                     LEFT JOIN hallazgos h ON sr.hallazgo_id = h.id
                     $whereClause
-                    GROUP BY $timeGrouping
-                    ORDER BY $timeGrouping ASC";
+                    GROUP BY periodo_key, periodo
+                    ORDER BY periodo_key ASC";
     
     $stmt = $mysqli->prepare($temporalSql);
     if (!empty($params)) {

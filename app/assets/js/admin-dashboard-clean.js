@@ -41,10 +41,25 @@ const AppState = {
         noParte: null,
         defectos: null,
         scrap: null,
+        estacionesScrap: null,
         trend: null
+    },
+    chartModes: {
+        scrap: 'mensual',      // 'mensual' | 'semanal'
+        estaciones: 'mensual', // date window for estaciones chart
+        partes: 'mensual'      // date window for partes chart
     },
     isLoading: false
 };
+
+// Registrar plugin de datalabels si está disponible
+try {
+    if (typeof Chart !== 'undefined' && typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+} catch (e) {
+    // Ignorar si no está disponible; se mostrará sin etiquetas
+}
 
 /**
  * ============================================================================
@@ -75,6 +90,44 @@ const Utils = {
         const date = new Date();
         date.setDate(date.getDate() - days);
         return date.toISOString().split('T')[0];
+    },
+
+    /** Obtener rango de semana actual (Lunes a Domingo) en YYYY-MM-DD */
+    getCurrentWeekRange() {
+        const now = new Date();
+        const day = now.getDay(); // 0=Dom,1=Lun,...
+        const diffToMonday = (day === 0 ? -6 : 1) - day; // mover a lunes
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diffToMonday);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        const toStr = (d) => d.toISOString().split('T')[0];
+        return { start: toStr(monday), end: toStr(sunday) };
+    },
+
+    /** Formatea fecha local a YYYY-MM-DD (sin efectos de zona horaria) */
+    toLocalYMD(d) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    },
+
+    /** Obtener rango del mes actual (1 al último día) en YYYY-MM-DD */
+    getCurrentMonthRange() {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        return { start: this.toLocalYMD(start), end: this.toLocalYMD(end) };
+    },
+
+    /** Obtener rango de un mes específico YYYY-MM en YYYY-MM-DD */
+    getMonthRange(yyyyMm) {
+        if (!yyyyMm || !/^\d{4}-\d{2}$/.test(yyyyMm)) return null;
+        const [y, m] = yyyyMm.split('-').map(n => parseInt(n, 10));
+        const start = new Date(y, m - 1, 1);
+        const end = new Date(y, m, 0);
+        return { start: this.toLocalYMD(start), end: this.toLocalYMD(end) };
     },
 
     /**
@@ -479,13 +532,84 @@ const DashboardManager = {
             total: parseInt(stats.total) || 0,
             con_hallazgos: parseInt(stats.con_hallazgos) || 0,
             retrabajo: parseInt(stats.retrabajo) || 0,
-            cuarentena: parseInt(stats.cuarentena) || 0
+            cuarentena: parseInt(stats.cuarentena) || 0,
+            total_piezas: parseInt(stats.total_piezas) || 0,
+            piezas_defectuosas: parseInt(stats.piezas_defectuosas) || 0,
+            piezas_retrabajo: parseInt(stats.piezas_retrabajo) || 0,
+            piezas_cuarentena: parseInt(stats.piezas_cuarentena) || 0
         };
 
+        // Actualizar contadores principales
         Utils.animateNumber('totalRegistros', safeStats.total);
         Utils.animateNumber('registrosConHallazgos', safeStats.con_hallazgos);
         Utils.animateNumber('registrosRetrabajo', safeStats.retrabajo);
         Utils.animateNumber('registrosCuarentena', safeStats.cuarentena);
+
+        // Actualizar contadores de piezas
+        Utils.animateNumber('totalPiezas', safeStats.total_piezas);
+        Utils.animateNumber('piezasDefectuosas', safeStats.piezas_defectuosas);
+        Utils.animateNumber('piezasRetrabajo', safeStats.piezas_retrabajo);
+        Utils.animateNumber('piezasCuarentena', safeStats.piezas_cuarentena);
+
+        // Calcular métricas adicionales
+        this.updateAdditionalMetrics(safeStats);
+    },
+
+    /**
+     * Actualizar métricas adicionales calculadas
+     */
+    updateAdditionalMetrics(stats) {
+        // Porcentaje de piezas defectuosas
+        const porcentajeDefectuosas = stats.total_piezas > 0 ? 
+            Math.round((stats.piezas_defectuosas / stats.total_piezas) * 100) : 0;
+        
+        Utils.animateNumber('porcentajeDefectuosas', porcentajeDefectuosas);
+        
+        // Actualizar barra de progreso
+        const progressBar = Utils.getElement('progressDefectuosas');
+        if (progressBar) {
+            setTimeout(() => {
+                progressBar.style.width = porcentajeDefectuosas + '%';
+                progressBar.setAttribute('aria-valuenow', porcentajeDefectuosas);
+            }, 500);
+        }
+
+        // Promedio de piezas por hallazgo
+        const promedioPiezas = stats.con_hallazgos > 0 ? 
+            (stats.piezas_defectuosas / stats.con_hallazgos).toFixed(1) : 0;
+        
+        const promedioElement = Utils.getElement('promedioPiezas');
+        if (promedioElement) {
+            promedioElement.textContent = promedioPiezas;
+        }
+
+        // Piezas sin defectos (eficiencia)
+        const piezasOK = stats.total_piezas - stats.piezas_defectuosas;
+        const porcentajeOK = stats.total_piezas > 0 ? 
+            Math.round((piezasOK / stats.total_piezas) * 100) : 0;
+
+        Utils.animateNumber('piezasOK', piezasOK);
+        Utils.animateNumber('porcentajeOK', porcentajeOK);
+
+        // Tendencia (se calculará cuando tengamos datos de tendencia)
+        this.updateTrendMetric();
+    },
+
+    /**
+     * Actualizar métrica de tendencia
+     */
+    updateTrendMetric() {
+        // Por ahora, mostrar un placeholder
+        // Esta función se actualizará cuando tengamos datos de tendencia
+        const tendenciaValor = Utils.getElement('tendenciaValor');
+        const tendenciaTexto = Utils.getElement('tendenciaTexto');
+        const tendenciaIcon = Utils.getElement('tendenciaIcon');
+
+        if (tendenciaValor && tendenciaTexto && tendenciaIcon) {
+            tendenciaValor.textContent = '7d';
+            tendenciaTexto.innerHTML = '<i class="fas fa-chart-line me-1"></i><span class="text-info">Últimos 7 días</span>';
+            tendenciaIcon.className = 'fas fa-chart-line';
+        }
     },
 
     /**
@@ -596,38 +720,238 @@ const ChartManager = {
      * Actualizar todos los gráficos
      */
     updateAllCharts(charts) {
+        // Gráficos híbridos (hallazgos + piezas)
         if (charts.areas?.labels?.length > 0) {
-            AppState.charts.area = this.updateOrCreateChart('chartAreas', charts.areas, 'Áreas con Más Hallazgos', 'doughnut');
+            AppState.charts.area = this.createHybridChart('chartAreas', charts.areas, 'Piezas Afectadas por Área', 'doughnut');
         } else {
             this.showEmptyChart('chartAreas', 'No hay datos de áreas disponibles');
         }
 
         if (charts.modelos?.labels?.length > 0) {
-            AppState.charts.modelo = this.updateOrCreateChart('chartModelos', charts.modelos, 'Modelos con Más Hallazgos', 'bar');
+            AppState.charts.modelo = this.createHybridChart('chartModelos', charts.modelos, 'Impacto por Modelo', 'bar');
         } else {
             this.showEmptyChart('chartModelos', 'No hay datos de modelos disponibles');
         }
 
         if (charts.usuarios?.labels?.length > 0) {
-            AppState.charts.usuario = this.updateOrCreateChart('chartUsuarios', charts.usuarios, 'Usuarios con Más Hallazgos', 'pie');
+            AppState.charts.usuario = this.createHybridChart('chartUsuarios', charts.usuarios, 'Eficiencia por Usuario', 'pie');
         } else {
             this.showEmptyChart('chartUsuarios', 'No hay datos de usuarios disponibles');
         }
 
         if (charts.no_parte?.labels?.length > 0) {
-            AppState.charts.noParte = this.updateOrCreateChart('chartNoParte', charts.no_parte, 'No. de Parte con Más Hallazgos', 'bar');
+            AppState.charts.noParte = this.createHybridChart('chartNoParte', charts.no_parte, 'Impacto por No. Parte', 'bar');
         } else {
             this.showEmptyChart('chartNoParte', 'No hay datos de no. de parte disponibles');
         }
 
         if (charts.defectos?.labels?.length > 0) {
-            AppState.charts.defectos = this.updateOrCreateChart('chartDefectos', charts.defectos, 'Defectos Más Reportados', 'horizontalBar');
+            AppState.charts.defectos = this.createHybridChart('chartDefectos', charts.defectos, 'Impacto por Defectos', 'bar', true);
         } else {
             this.showEmptyChart('chartDefectos', 'No hay datos de defectos disponibles');
         }
 
         // Cargar gráfica de scrap
         this.loadScrapChart();
+        
+        // Cargar gráfica de estaciones con scrap
+        this.loadEstacionesScrapChart();
+        
+    // Cargar gráfica de partes con más scrap
+    this.loadPartesScrapChart();
+    // Cargar observaciones top en scrap
+    this.loadScrapObservacionesChart();
+    },
+
+    /**
+     * Crear gráfico híbrido que muestra tanto hallazgos como piezas
+     */
+    createHybridChart(canvasId, data, title, chartType, isHorizontal = false) {
+        const ctx = Utils.getElement(canvasId);
+        if (!ctx) {
+            console.warn(`Canvas ${canvasId} no encontrado`);
+            return null;
+        }
+
+        // Destruir gráfico existente si existe
+        if (AppState.charts[canvasId]) {
+            AppState.charts[canvasId].destroy();
+        }
+
+        // Determinar si mostrar ambas métricas o solo piezas según el tipo de gráfico
+        const showBothMetrics = chartType === 'bar' || isHorizontal;
+        
+        let datasets;
+        if (showBothMetrics && data.piezas) {
+        // Gráfico con dos datasets (registros + piezas)
+            datasets = [
+                {
+            label: 'Registros',
+                    data: data.data || [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Piezas Afectadas',
+                    data: data.piezas || [],
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ];
+        } else {
+            // Gráfico simple mostrando solo piezas para doughnut y pie
+            datasets = [{
+                label: 'Piezas Afectadas',
+                data: data.piezas || data.data || [],
+                backgroundColor: this.generateColors(data.labels?.length || 0),
+                borderWidth: 1
+            }];
+        }
+
+        // Plugin para texto al centro (solo doughnut)
+        const centerTextPlugin = (chartType === 'doughnut') ? {
+            id: `centerText_${canvasId}`,
+            afterDraw(c) {
+                const ds0 = c.config.data?.datasets?.[0];
+                if (!ds0) return;
+                const total = (ds0.data || []).reduce((a, b) => a + (Number(b) || 0), 0);
+                const { ctx } = c;
+                const x = c.chartArea.left + (c.chartArea.right - c.chartArea.left) / 2;
+                const y = c.chartArea.top + (c.chartArea.bottom - c.chartArea.top) / 2;
+                ctx.save();
+                ctx.fillStyle = '#111';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = '600 14px Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial';
+                ctx.fillText(`${Number(total).toLocaleString('es-MX')} piezas`, x, y);
+                ctx.restore();
+            }
+        } : null;
+
+        const config = {
+            type: chartType,
+            data: {
+                labels: data.labels || [],
+                datasets: datasets
+            },
+            plugins: centerTextPlugin ? [centerTextPlugin] : [],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: isHorizontal ? 'y' : 'x',
+                layout: {
+                    padding: {
+                        top: 32,   // espacio extra para que no choquen labels con el título
+                        right: 10,
+                        bottom: 10,
+                        left: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: chartType === 'doughnut' || chartType === 'pie' ? 'bottom' : 'top',
+                        labels: { usePointStyle: true, boxWidth: 10 }
+                    },
+                    title: {
+                        display: true,
+                        text: title,
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    datalabels: (chartType === 'doughnut' || chartType === 'pie') ? {
+                        color: '#212529',
+                        font: { weight: 'bold' },
+                        anchor: 'outer',
+                        align: 'outer',
+                        offset: 12,
+                        clamp: true,
+                        clip: false,
+                        formatter: (value, ctx) => {
+                            const ds = ctx.chart.data.datasets[ctx.datasetIndex];
+                            const total = (ds.data || []).reduce((a, b) => a + (Number(b) || 0), 0);
+                            const pct = total ? (value / total) * 100 : 0;
+                            const val = Number(value);
+                            const valFmt = val >= 1000 ? `${(val/1000).toFixed(2)} mil` : `${val}`;
+                            return `${valFmt} (${pct.toFixed(2)}%)`;
+                        }
+                    } : undefined,
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const val = Number(context.parsed) || 0;
+                                const ds = context.dataset.data;
+                                const total = (ds || []).reduce((a, b) => a + (Number(b) || 0), 0);
+                                const pct = total ? ((val / total) * 100).toFixed(2) : '0.00';
+                                return `${context.label}: ${val.toLocaleString('es-MX')} piezas (${pct}%)`;
+                            },
+                            afterLabel: (context) => {
+                                const index = context.dataIndex;
+                                if (data.promedio && data.promedio[index]) {
+                                    return `Promedio: ${data.promedio[index]} piezas/hallazgo`;
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                },
+                cutout: chartType === 'doughnut' ? '60%' : undefined,
+                scales: chartType === 'bar' ? {
+                    [isHorizontal ? 'x' : 'y']: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                } : undefined
+            }
+        };
+
+    const chart = new Chart(ctx, config);
+        AppState.charts[canvasId] = chart;
+        
+        // Remover indicador de carga
+        this.hideChartLoading(canvasId);
+        
+        return chart;
+    },
+
+    /**
+     * Generar colores para gráficos
+     */
+    generateColors(count) {
+        const colors = [
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(255, 205, 86, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(153, 102, 255, 0.7)',
+            'rgba(255, 159, 64, 0.7)',
+            'rgba(199, 199, 199, 0.7)',
+            'rgba(83, 102, 255, 0.7)',
+            'rgba(255, 99, 255, 0.7)',
+            'rgba(99, 255, 132, 0.7)'
+        ];
+        
+        return Array(count).fill().map((_, i) => colors[i % colors.length]);
+    },
+
+    /**
+     * Ocultar indicador de carga de un gráfico específico
+     */
+    hideChartLoading(canvasId) {
+        const canvas = Utils.getElement(canvasId);
+        if (canvas) {
+            const container = canvas.parentElement;
+            const loadingElement = container.querySelector('.chart-loading');
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+        }
     },
 
     /**
@@ -644,6 +968,11 @@ const ChartManager = {
         const loadingElement = container.querySelector('.chart-loading');
         if (loadingElement) {
             loadingElement.remove();
+        }
+        // Remover overlays de vacío si quedaron de una carga previa
+        const emptyOverlay = container.querySelector('.chart-empty');
+        if (emptyOverlay) {
+            emptyOverlay.remove();
         }
 
         // Si hay configuración personalizada, usarla
@@ -723,18 +1052,17 @@ const ChartManager = {
      */
     async loadScrapChart() {
         try {
-            // Obtener filtros actuales del dashboard
-            const filters = {
-                fecha_inicio: Utils.getElement('fechaInicio')?.value || '',
-                fecha_fin: Utils.getElement('fechaFin')?.value || '',
-                area: Utils.getElement('filtroArea')?.value || '',
-                tipo: 'mensual' // Por defecto mensual
-            };
-
+            // Construir parámetros desde AppState o inputs si existen
             const params = new URLSearchParams();
-            Object.entries(filters).forEach(([key, value]) => {
-                if (value) params.append(key, value);
-            });
+            const tipo = 'mensual'; // siempre mensual para la gráfica principal
+            params.set('tipo', tipo);
+
+            const fi = AppState.currentFilters.fecha_inicio || Utils.getElement('fechaInicio')?.value || '';
+            const ff = AppState.currentFilters.fecha_fin || Utils.getElement('fechaFin')?.value || '';
+            const area = AppState.currentFilters.area || Utils.getElement('filtroArea')?.value || '';
+            if (fi) params.set('fecha_inicio', fi);
+            if (ff) params.set('fecha_fin', ff);
+            if (area) params.set('area', area);
 
             const response = await fetch(`includes/scrap_data.php?${params.toString()}`);
             const result = await response.json();
@@ -752,16 +1080,27 @@ const ChartManager = {
                 return;
             }
 
+            // Limpiar overlays previos si existen
+            const scrapCanvas = Utils.getElement('chartScrap');
+            if (scrapCanvas && scrapCanvas.parentElement) {
+                const empty = scrapCanvas.parentElement.querySelector('.chart-empty');
+                if (empty) empty.remove();
+                const loading = scrapCanvas.parentElement.querySelector('.chart-loading');
+                if (loading) loading.remove();
+            }
+
             const chartData = {
                 labels: temporalData.map(item => {
-                    // Formatear etiquetas de fecha
-                    if (item.periodo.includes('-')) {
-                        const [year, month] = item.periodo.split('-');
+                    // Solo usar formato mes abreviado cuando viene como YYYY-MM
+                    const periodo = String(item.periodo || '');
+                    if (/^\d{4}-\d{2}$/.test(periodo)) {
+                        const [year, month] = periodo.split('-');
                         const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
                                           'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-                        return `${monthNames[parseInt(month) - 1]} ${year}`;
+                        return `${monthNames[Math.max(0, Math.min(11, parseInt(month, 10) - 1))]} ${year}`;
                     }
-                    return item.periodo;
+                    // En semanal o formatos distintos, usar la etiqueta tal cual
+                    return periodo;
                 }),
                 datasets: [
                     {
@@ -892,6 +1231,124 @@ const ChartManager = {
     },
 
     /**
+     * Gráfica semanal de dinero perdido en scrap (con selector de mes propio)
+     */
+    async loadScrapWeeklyChart() {
+        try {
+            const monthEl = Utils.getElement('scrapWeekMonth');
+            const yyyyMm = monthEl?.value;
+            if (!yyyyMm) {
+                this.showEmptyChart('chartScrapWeekly', 'Selecciona un mes para ver sus semanas');
+                return;
+            }
+            const range = Utils.getMonthRange(yyyyMm);
+            if (!range) {
+                this.showEmptyChart('chartScrapWeekly', 'Mes inválido');
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.set('tipo', 'semanal');
+            params.set('fecha_inicio', range.start);
+            params.set('fecha_fin', range.end);
+
+            const response = await fetch(`includes/scrap_data.php?${params.toString()}`);
+            if (!response.ok) {
+                this.showEmptyChart('chartScrapWeekly', `Error del servidor (${response.status})`);
+                return;
+            }
+            let result;
+            try {
+                result = await response.json();
+            } catch (e) {
+                this.showEmptyChart('chartScrapWeekly', 'Respuesta inválida del servidor');
+                return;
+            }
+            if (!result.success) {
+                const msg = result.error || result.message || 'Error al cargar datos de scrap';
+                this.showEmptyChart('chartScrapWeekly', msg);
+                return;
+            }
+
+            const data = result.temporal || [];
+            if (!data.length) {
+                this.showEmptyChart('chartScrapWeekly', 'No hay datos de scrap para ese mes');
+                return;
+            }
+
+            const canvas = Utils.getElement('chartScrapWeekly');
+            if (!canvas) return;
+            const parent = canvas.parentElement;
+            parent?.querySelector('.chart-empty')?.remove();
+            parent?.querySelector('.chart-loading')?.remove();
+
+            if (AppState.charts.scrapWeekly) {
+                AppState.charts.scrapWeekly.destroy();
+            }
+
+            const chartData = {
+                labels: data.map(it => String(it.periodo || '')),
+                datasets: [
+                    {
+                        label: 'Dinero Perdido ($USD)',
+                        data: data.map(it => parseFloat(it.total_periodo) || 0),
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220,53,69,0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Cantidad de Registros',
+                        data: data.map(it => parseInt(it.cantidad_registros) || 0),
+                        borderColor: '#ffc107',
+                        backgroundColor: 'rgba(255,193,7,0.1)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            };
+
+            const config = {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        title: { display: true, text: 'Dinero Perdido por Semana', font: { size: 16, weight: 'bold' } }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: (v) => '$' + Number(v).toLocaleString('en-US') },
+                            title: { display: true, text: 'Dinero Perdido (USD)' }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { stepSize: 1 },
+                            title: { display: true, text: 'Cantidad de Registros' }
+                        }
+                    }
+                }
+            };
+
+            const ctx = canvas.getContext('2d');
+            AppState.charts.scrapWeekly = new Chart(ctx, config);
+
+        } catch (e) {
+            console.error('Error semanal scrap:', e);
+            this.showEmptyChart('chartScrapWeekly', 'Error al cargar datos de scrap');
+        }
+    },
+
+    /**
      * Actualizar estadísticas de scrap
      */
     updateScrapStats(resumen) {
@@ -905,6 +1362,496 @@ const ChartManager = {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
+        }
+    },
+
+    /**
+     * Cargar gráfica de estaciones con más dinero perdido por scrap
+     */
+    async loadEstacionesScrapChart() {
+        try {
+            const params = new URLSearchParams();
+            // Rango por mes (selector propio)
+            const monthEl = Utils.getElement('estacionesMonth');
+            const range = monthEl && monthEl.value ? Utils.getMonthRange(monthEl.value) : Utils.getCurrentMonthRange();
+            if (!range) {
+                this.showEmptyChart('chartEstacionesScrap', 'Selecciona un mes');
+                return;
+            }
+            params.set('fecha_inicio', range.start);
+            params.set('fecha_fin', range.end);
+
+            const url = `includes/scrap_estaciones_data.php?${params.toString()}`;
+
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                this.showEmptyChart('chartEstacionesScrap', 'Error al cargar datos de estaciones');
+                return;
+            }
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                this.showEmptyChart('chartEstacionesScrap', result.message || 'Error al cargar datos');
+                return;
+            }
+
+            if (!result.data || !result.data.labels || result.data.labels.length === 0) {
+                this.showEmptyChart('chartEstacionesScrap', 'No hay datos de estaciones con scrap disponibles');
+                return;
+            }
+
+            const chartData = result.data;
+
+            // Configuración para Chart.js v3+ con barras horizontales
+            const chartConfig = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Esto hace que sea horizontal
+                    elements: {
+                        bar: {
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            barThickness: 20,      // más delgado para que quepan más etiquetas en 300px
+                            maxBarThickness: 26
+                        }
+                    },
+                    layout: {
+                        padding: { left: 12, right: 12 }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Estaciones con Más Dinero Perdido por Scrap',
+                            font: {
+                                size: 16,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.x;
+                                    const estacion = context.label;
+                                    return `${estacion}: $${value.toLocaleString('en-US', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2
+                                    })}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('en-US', {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Dinero Perdido (USD)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                autoSkip: false,     // mostrar todas las etiquetas (evita que se oculte "Prensas")
+                                maxTicksLimit: 20,   // por seguridad, permitir hasta 20 por si hay menos espacio
+                                font: { size: 11 }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Estaciones'
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Crear la gráfica directamente en lugar de usar updateOrCreateChart
+            const canvas = Utils.getElement('chartEstacionesScrap');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                // Limpiar overlays previos si existen
+                const parent = canvas.parentElement;
+                if (parent) {
+                    const empty = parent.querySelector('.chart-empty');
+                    if (empty) empty.remove();
+                    const loading = parent.querySelector('.chart-loading');
+                    if (loading) loading.remove();
+                }
+                
+                // Destruir gráfica anterior si existe
+                if (AppState.charts.estacionesScrap) {
+                    AppState.charts.estacionesScrap.destroy();
+                }
+                
+                // Crear nueva gráfica
+                AppState.charts.estacionesScrap = new Chart(ctx, chartConfig);
+            } else {
+                console.error('No se encontró el canvas chartEstacionesScrap');
+            }
+
+            // Actualizar estadísticas de estaciones
+            this.updateEstacionesScrapStats(result.resumen, result.resumen_areas);
+
+        } catch (error) {
+            console.error('Error al cargar gráfica de estaciones con scrap:', error);
+            this.showEmptyChart('chartEstacionesScrap', 'Error al cargar datos de estaciones');
+        }
+    },
+
+    /**
+     * Cargar gráfica de números de parte con más scrap (con área)
+     */
+    async loadPartesScrapChart() {
+        try {
+            const params = new URLSearchParams();
+            // Rango por mes (selector propio)
+            const monthEl = Utils.getElement('partesMonth');
+            const range = monthEl && monthEl.value ? Utils.getMonthRange(monthEl.value) : Utils.getCurrentMonthRange();
+            if (!range) {
+                this.showEmptyChart('chartPartesScrap', 'Selecciona un mes');
+                return;
+            }
+            params.set('fecha_inicio', range.start);
+            params.set('fecha_fin', range.end);
+
+            const res = await fetch(`includes/scrap_partes_data.php?${params.toString()}`);
+            if (!res.ok) {
+                this.showEmptyChart('chartPartesScrap', 'Error al cargar datos de partes');
+                return;
+            }
+            const result = await res.json();
+            if (!result.success || !result.data?.labels?.length) {
+                this.showEmptyChart('chartPartesScrap', 'No hay datos de partes con scrap');
+                return;
+            }
+
+            const canvas = Utils.getElement('chartPartesScrap');
+            if (canvas) {
+                const parent = canvas.parentElement;
+                const empty = parent?.querySelector('.chart-empty');
+                if (empty) empty.remove();
+                const loading = parent?.querySelector('.chart-loading');
+                if (loading) loading.remove();
+
+                // Destruir si existe
+                if (AppState.charts.partesScrap) {
+                    AppState.charts.partesScrap.destroy();
+                }
+
+                const ctx = canvas.getContext('2d');
+                AppState.charts.partesScrap = new Chart(ctx, {
+                    type: 'bar',
+                    data: result.data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        elements: {
+                            bar: {
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barThickness: 28,
+                                maxBarThickness: 34
+                            }
+                        },
+                        layout: { padding: { right: 28 } },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Números de Parte con Mayor Scrap',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` $${Number(ctx.parsed.x).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: (v) => '$' + Number(v).toLocaleString('en-US')
+                                },
+                                title: { display: true, text: 'Dinero Perdido (USD)' }
+                            },
+                            y: {
+                                title: { display: true, text: 'No. de Parte (Área)' },
+                                ticks: {
+                                    autoSkip: false,
+                                    font: { size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Resumen
+            const totalEl = Utils.getElement('totalPartesPerdido');
+            if (totalEl && result.resumen?.total_perdido_general !== undefined) {
+                totalEl.textContent = '$' + Number(result.resumen.total_perdido_general).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+
+        } catch (e) {
+            console.error('Error al cargar partes scrap:', e);
+            this.showEmptyChart('chartPartesScrap', 'Error al cargar datos de partes');
+        }
+    },
+
+    /**
+     * Cargar gráfica de números de parte por cantidad de piezas en scrap
+     */
+    async loadPartesPiezasScrapChart() {
+        try {
+            const params = new URLSearchParams();
+            const monthEl = Utils.getElement('partesPiezasMonth');
+            const range = monthEl && monthEl.value ? Utils.getMonthRange(monthEl.value) : Utils.getCurrentMonthRange();
+            if (!range) {
+                this.showEmptyChart('chartPartesPiezasScrap', 'Selecciona un mes');
+                return;
+            }
+            params.set('fecha_inicio', range.start);
+            params.set('fecha_fin', range.end);
+
+            const res = await fetch(`includes/scrap_partes_piezas_data.php?${params.toString()}`);
+            if (!res.ok) {
+                this.showEmptyChart('chartPartesPiezasScrap', 'Error al cargar datos');
+                return;
+            }
+            const result = await res.json();
+            if (!result.success || !result.data?.labels?.length) {
+                this.showEmptyChart('chartPartesPiezasScrap', 'No hay datos');
+                const totalEl = Utils.getElement('totalPartesPiezas');
+                if (totalEl) totalEl.textContent = '0 piezas';
+                return;
+            }
+
+            const canvas = Utils.getElement('chartPartesPiezasScrap');
+            if (canvas) {
+                const parent = canvas.parentElement;
+                const empty = parent?.querySelector('.chart-empty');
+                if (empty) empty.remove();
+                const loading = parent?.querySelector('.chart-loading');
+                if (loading) loading.remove();
+
+                if (AppState.charts.partesPiezasScrap) AppState.charts.partesPiezasScrap.destroy();
+
+                const ctx = canvas.getContext('2d');
+                AppState.charts.partesPiezasScrap = new Chart(ctx, {
+                    type: 'bar',
+                    data: result.data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        elements: {
+                            bar: {
+                                borderWidth: 1,
+                                borderRadius: 6,
+                                barThickness: 28,
+                                maxBarThickness: 34
+                            }
+                        },
+                        layout: { padding: { right: 28 } },
+                        plugins: {
+                            title: { 
+                                display: true, 
+                                text: 'Números de Parte por Cantidad de Piezas en Scrap', 
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            subtitle: {
+                                display: true,
+                                text: () => {
+                                    const total = result?.resumen?.total_piezas_general ?? 0;
+                                    return `Total: ${Number(total).toLocaleString('es-MX')} piezas`;
+                                },
+                                color: '#6c757d',
+                                font: { size: 12 }
+                            },
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'right',
+                                color: '#212529',
+                                font: { weight: 'bold' },
+                                offset: 6,
+                                formatter: (value) => `${Number(value).toLocaleString('es-MX')}`,
+                                clip: false,
+                                clamp: true
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => ` ${Number(ctx.parsed.x).toLocaleString('es-MX')} piezas`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                ticks: { callback: (v) => Number(v).toLocaleString('es-MX') + ' piezas' },
+                                title: { display: true, text: 'Piezas' }
+                            },
+                            y: {
+                                title: { display: true, text: 'No. de Parte (Área)' },
+                                ticks: {
+                                    autoSkip: false,
+                                    font: { size: 11 }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const totalEl = Utils.getElement('totalPartesPiezas');
+            if (totalEl && result.resumen?.total_piezas_general !== undefined) {
+                totalEl.textContent = `${Number(result.resumen.total_piezas_general).toLocaleString('es-MX')} piezas`;
+            }
+
+        } catch (e) {
+            console.error('Error al cargar partes por piezas:', e);
+            this.showEmptyChart('chartPartesPiezasScrap', 'Error al cargar datos');
+        }
+    },
+
+    /**
+     * Cargar gráfica de observaciones más frecuentes en registros de scrap (Top 5)
+     */
+    async loadScrapObservacionesChart() {
+        try {
+            const params = new URLSearchParams();
+            const monthEl = Utils.getElement('obsMonth');
+            const range = monthEl && monthEl.value ? Utils.getMonthRange(monthEl.value) : Utils.getCurrentMonthRange();
+            if (!range) {
+                this.showEmptyChart('chartObsScrap', 'Selecciona un mes');
+                return;
+            }
+            params.set('fecha_inicio', range.start);
+            params.set('fecha_fin', range.end);
+
+            const res = await fetch(`includes/scrap_observaciones_data.php?${params.toString()}`);
+            if (!res.ok) {
+                this.showEmptyChart('chartObsScrap', 'Error al cargar observaciones');
+                return;
+            }
+            const result = await res.json();
+            if (!result.success || !result.data?.labels?.length) {
+                this.showEmptyChart('chartObsScrap', 'No hay observaciones registradas');
+                const totalEl = Utils.getElement('totalObsScrap');
+                if (totalEl) totalEl.textContent = '0';
+                return;
+            }
+
+            const canvas = Utils.getElement('chartObsScrap');
+            if (!canvas) return;
+            const parent = canvas.parentElement;
+            parent?.querySelector('.chart-empty')?.remove();
+            parent?.querySelector('.chart-loading')?.remove();
+
+            if (AppState.charts.obsScrap) {
+                AppState.charts.obsScrap.destroy();
+            }
+
+            const ctx = canvas.getContext('2d');
+            AppState.charts.obsScrap = new Chart(ctx, {
+                type: 'bar',
+                data: result.data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    elements: { bar: { borderRadius: 6, barThickness: 26, maxBarThickness: 32 } },
+                    layout: { padding: { right: 24 } },
+                    plugins: {
+                        title: { display: true, text: 'Observaciones más frecuentes (Top 5)', font: { size: 16, weight: 'bold' } },
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (ctx) => ` ${Number(ctx.parsed.x).toLocaleString('es-MX')} piezas` } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { stepSize: 1, callback: (v) => Number(v).toLocaleString('es-MX') }, title: { display: true, text: 'Piezas' } },
+                        y: { ticks: { autoSkip: false, font: { size: 11 } }, title: { display: true, text: 'Observación' } }
+                    }
+                }
+            });
+
+            const totalEl = Utils.getElement('totalObsScrap');
+            if (totalEl && result.resumen?.total_piezas !== undefined) {
+                totalEl.textContent = `${Number(result.resumen.total_piezas).toLocaleString('es-MX')} piezas`;
+            }
+        } catch (e) {
+            console.error('Error al cargar observaciones de scrap:', e);
+            this.showEmptyChart('chartObsScrap', 'Error al cargar observaciones');
+        }
+    },
+
+    /**
+     * Actualizar estadísticas de estaciones con scrap
+     */
+    updateEstacionesScrapStats(resumen, resumenAreas) {
+        // Actualizar total perdido en estaciones
+        const totalEstacionesPerdido = Utils.getElement('totalEstacionesPerdido');
+        if (totalEstacionesPerdido && resumen.total_perdido_general) {
+            totalEstacionesPerdido.textContent = '$' + Number(resumen.total_perdido_general).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // Actualizar resumen por áreas
+        const resumenAreasContainer = Utils.getElement('resumenAreasScrap');
+        if (resumenAreasContainer && resumenAreas && resumenAreas.length > 0) {
+            let html = '';
+            
+            resumenAreas.forEach(area => {
+                const porcentaje = resumen.total_perdido_general > 0 ? 
+                    (area.total_perdido / resumen.total_perdido_general * 100).toFixed(1) : 0;
+                
+                html += `
+                    <div class="col-md-3 mb-2">
+                        <div class="card border-left-danger shadow-sm h-100">
+                            <div class="card-body p-3">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                            ${area.area}
+                                        </div>
+                                        <div class="h6 mb-0 font-weight-bold text-gray-800">
+                                            $${Number(area.total_perdido).toLocaleString('en-US', {
+                                                minimumFractionDigits: 2,
+                                                maximumFractionDigits: 2
+                                            })}
+                                        </div>
+                                        <div class="text-xs text-muted">
+                                            ${area.total_estaciones} estación(es) • ${porcentaje}%
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-industry fa-2x text-gray-300"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resumenAreasContainer.innerHTML = html;
         }
     }
 };
@@ -998,10 +1945,10 @@ const HallazgosManager = {
         console.log('Cargando hallazgos con filtros:', filtros);
 
         try {
-            // Cargar datos activos e inactivos (todos excepto cuarentena)
+            // Cargar datos activos e inactivos (excluye cuarentena, scrap y cerradas)
             const activosResponse = await fetch('includes/hallazgos_data.php?' + new URLSearchParams({
                 ...filtros,
-                estado: 'no_cuarentena'
+                estado: 'activo,inactivo'
             }));
 
             if (activosResponse.ok) {
@@ -1084,7 +2031,7 @@ const HallazgosManager = {
         if (!Array.isArray(data) || data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="${estado === 'cuarentena' ? '10' : '11'}" class="text-center py-4">
+                    <td colspan="${estado === 'cuarentena' ? '11' : '12'}" class="text-center py-4">
                         <i class="fas fa-search fa-2x text-muted mb-2"></i>
                         <p class="text-muted">No se encontraron registros</p>
                     </td>
@@ -1093,20 +2040,25 @@ const HallazgosManager = {
             return;
         }
 
-        const rows = data.map(hallazgo => {
+        // Calcular offset por si en el futuro hay paginación
+        const offset = 0;
+
+        const rows = data.map((hallazgo, idx) => {
+            const numero = offset + idx + 1;
             const baseColumns = `
-                <td><strong>#${hallazgo.id}</strong></td>
+                <td><strong>${numero}</strong></td>
                 <td>${Utils.formatDate(hallazgo.fecha_creacion)}</td>
                 <td>${hallazgo.area_ubicacion || 'N/A'}</td>
                 <td>${hallazgo.modelo || 'N/A'}</td>
                 <td>${hallazgo.no_parte || 'N/A'}</td>
                 <td>${hallazgo.job_order || 'N/A'}</td>
                 <td>${hallazgo.usuario_nombre || 'N/A'}</td>
+                <td><span class="badge bg-primary">${hallazgo.cantidad_piezas || 0}</span></td>
             `;
 
             if (estado === 'activo') {
                 return `
-                    <tr>
+                    <tr data-id="${hallazgo.id}">
                         ${baseColumns}
                         <td><span class="badge ${hallazgo.retrabajo === 'Si' ? 'bg-warning' : 'bg-success'}">${hallazgo.retrabajo || 'No'}</span></td>
                         <td>
@@ -1130,7 +2082,7 @@ const HallazgosManager = {
                 `;
             } else {
                 return `
-                    <tr>
+                    <tr data-id="${hallazgo.id}">
                         ${baseColumns}
                         <td>
                             <span class="badge bg-info defectos-clickeable" style="cursor: pointer;" onclick="HallazgosManager.verDefectos(${hallazgo.id})" title="Click para ver detalles de los defectos">
@@ -1182,7 +2134,7 @@ const HallazgosManager = {
         if (!Array.isArray(data) || data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="11" class="text-center py-4">
+                    <td colspan="12" class="text-center py-4">
                         <i class="fas fa-search fa-2x text-muted mb-2"></i>
                         <p class="text-muted">No se encontraron registros de scrap</p>
                     </td>
@@ -1191,16 +2143,19 @@ const HallazgosManager = {
             return;
         }
 
-        const rows = data.map(scrap => {
+        const offset = 0;
+        const rows = data.map((scrap, idx) => {
+            const numero = offset + idx + 1;
             return `
-                <tr>
-                    <td><strong>#${scrap.id}</strong></td>
+                <tr data-id="${scrap.id}">
+                    <td><strong>${numero}</strong></td>
                     <td>${Utils.formatDate(scrap.fecha_creacion)}</td>
                     <td>${scrap.area_ubicacion || 'N/A'}</td>
                     <td>${scrap.modelo || 'N/A'}</td>
                     <td>${scrap.no_parte || 'N/A'}</td>
                     <td>${scrap.job_order || 'N/A'}</td>
                     <td>${scrap.usuario_nombre || 'N/A'}</td>
+                    <td><span class="badge bg-primary">${scrap.cantidad_piezas || 0}</span></td>
                     <td>
                         <span class="badge bg-info defectos-clickeable" style="cursor: pointer;" onclick="HallazgosManager.verDefectos(${scrap.id})" title="Click para ver detalles de los defectos">
                             ${scrap.total_defectos || 0}
@@ -1223,7 +2178,7 @@ const HallazgosManager = {
     getActionButtons(item) {
         const buttons = [];
         
-        // Si retrabajo es "No", mostrar botones para retrabajo, cuarentena y scrap
+        // Si retrabajo es "No", mostrar botones para retrabajo, cuarentena, scrap y cerrar
         if (item.retrabajo === 'No') {
             buttons.push(`
                 <button class="btn btn-sm btn-warning" onclick="HallazgosManager.cambiarRetrabajoEstado(${item.id}, 'Si')" title="Marcar como retrabajo">
@@ -1235,10 +2190,13 @@ const HallazgosManager = {
                 <button class="btn btn-sm btn-dark" onclick="HallazgosManager.mostrarModalScrap(${item.id})" title="Enviar a scrap">
                     <i class="fas fa-trash"></i> Scrap
                 </button>
+                <button class="btn btn-sm btn-primary" onclick="HallazgosManager.mostrarModalCerrar(${item.id})" title="Cerrar hallazgo">
+                    <i class="fas fa-lock"></i> Cerrar
+                </button>
             `);
         }
         
-        // Si retrabajo es "Si", mostrar botones para cuarentena, scrap y para quitar retrabajo
+        // Si retrabajo es "Si", mostrar botones para cuarentena, scrap, cerrar y quitar retrabajo
         if (item.retrabajo === 'Si') {
             buttons.push(`
                 <button class="btn btn-sm btn-danger" onclick="HallazgosManager.cambiarEstado(${item.id}, 'cuarentena')" title="Enviar a cuarentena">
@@ -1246,6 +2204,9 @@ const HallazgosManager = {
                 </button>
                 <button class="btn btn-sm btn-dark" onclick="HallazgosManager.mostrarModalScrap(${item.id})" title="Enviar a scrap">
                     <i class="fas fa-trash"></i> Scrap
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="HallazgosManager.mostrarModalCerrar(${item.id})" title="Cerrar hallazgo">
+                    <i class="fas fa-lock"></i> Cerrar
                 </button>
                 <button class="btn btn-sm btn-success" onclick="HallazgosManager.cambiarRetrabajoEstado(${item.id}, 'No')" title="Quitar retrabajo">
                     <i class="fas fa-check"></i> Quitar Retrabajo
@@ -1255,6 +2216,7 @@ const HallazgosManager = {
         
         return buttons.join('');
     },
+
 
     /**
      * Cambiar estado de un hallazgo
@@ -1273,6 +2235,8 @@ const HallazgosManager = {
         if (confirmMessage) {
             confirmMessage.textContent = mensajes[nuevoEstado];
         }
+
+        
 
         if (confirmButton) {
             confirmButton.onclick = () => {
@@ -1802,6 +2766,68 @@ const HallazgosManager = {
         }
     },
 
+    /** Mostrar modal para cerrar hallazgo */
+    mostrarModalCerrar(hallazgoId) {
+        const modalEl = Utils.getElement('cerrarModal');
+        const modal = new bootstrap.Modal(modalEl);
+        const idSpan = Utils.getElement('cerrarHallazgoId');
+        const fechaInput = Utils.getElement('cerrarFecha');
+        const solucionInput = Utils.getElement('cerrarSolucion');
+        const btn = Utils.getElement('confirmarCierre');
+
+        if (idSpan) idSpan.textContent = hallazgoId;
+        if (fechaInput) {
+            const now = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            const local = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            fechaInput.value = local;
+        }
+        if (solucionInput) solucionInput.value = '';
+
+        if (btn) {
+            btn.replaceWith(btn.cloneNode(true));
+            const newBtn = Utils.getElement('confirmarCierre');
+            newBtn.addEventListener('click', () => this.confirmarCerrar(hallazgoId));
+        }
+
+        modal.show();
+    },
+
+    /** Confirmar cierre y enviar al backend */
+    async confirmarCerrar(hallazgoId) {
+        try {
+            const fecha = Utils.getElement('cerrarFecha')?.value || '';
+            const solucion = Utils.getElement('cerrarSolucion')?.value || '';
+            const form = new FormData();
+            form.append('id', hallazgoId);
+            form.append('fecha_cierre', fecha);
+            form.append('solucion', solucion);
+
+            const btn = Utils.getElement('confirmarCierre');
+            const original = btn?.innerHTML;
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Cerrando...';
+                btn.disabled = true;
+            }
+
+            const resp = await fetch('includes/cerrar_hallazgo.php', { method: 'POST', body: form });
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.message || 'Error al cerrar');
+
+            NotificationManager.show('Hallazgo cerrado correctamente', 'success');
+            const modal = bootstrap.Modal.getInstance(Utils.getElement('cerrarModal'));
+            modal?.hide();
+            await this.loadData();
+            await DashboardManager.loadDashboardData();
+        } catch (e) {
+            console.error(e);
+            NotificationManager.show('No se pudo cerrar el hallazgo: ' + e.message, 'error');
+        } finally {
+            const btn = Utils.getElement('confirmarCierre');
+            if (btn) { btn.innerHTML = '<i class="fas fa-lock me-1"></i> Cerrar'; btn.disabled = false; }
+        }
+    },
+
     /**
      * Inicializar filtros de tabla
      */
@@ -1836,15 +2862,15 @@ const HallazgosManager = {
         if (tipo === 'activos') {
             data = AppState.hallazgosData;
             tipoReporte = 'Registros Activos';
-            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Defectos'];
+            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Cantidad', 'Defectos'];
         } else if (tipo === 'cuarentena') {
             data = AppState.cuarentenaData;
             tipoReporte = 'Registros en Cuarentena';
-            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Defectos'];
+            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Cantidad', 'Defectos'];
         } else if (tipo === 'scrap') {
             data = AppState.scrapData;
             tipoReporte = 'Registros en Scrap';
-            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Defectos', 'Fecha Scrap', 'Valor Scrap'];
+            columnas = ['Fecha', 'Área', 'Est.', 'No. Parte', 'Modelo', 'Job Order', 'Cantidad', 'Defectos', 'Fecha Scrap', 'Valor Scrap'];
         }
         
         if (!data || data.length === 0) {
@@ -1870,7 +2896,7 @@ const HallazgosManager = {
         
         // Crear encabezado del reporte
         const reportHeader = [
-            [`REPORTE DE HALLAZGOS DE CALIDAD`],
+            [`REPORTE DE REGISTROS DE CALIDAD`],
             [`Tipo: ${tipoReporte}`],
             [`Fecha de generación: ${fechaReporte}`],
             [`Total de registros: ${data.length}`],
@@ -1887,6 +2913,7 @@ const HallazgosManager = {
                 item.no_parte || 'N/A',
                 item.modelo || 'N/A',
                 item.job_order || 'N/A',
+                item.cantidad_piezas || 0,
                 item.total_defectos || 0
             ];
 
@@ -1902,11 +2929,14 @@ const HallazgosManager = {
 
         // Agregar línea de resumen al final
         const totalDefectos = data.reduce((sum, item) => sum + (item.total_defectos || 0), 0);
+        const totalPiezas = data.reduce((sum, item) => sum + (item.cantidad_piezas || 0), 0);
         const resumenFooter = [
             [''], // Línea vacía
             ['RESUMEN:'],
             [`Total de registros: ${data.length}`],
+            [`Total de piezas: ${totalPiezas}`],
             [`Total de defectos: ${totalDefectos}`],
+            [`Promedio de piezas por registro: ${(totalPiezas / data.length).toFixed(2)}`],
             [`Promedio de defectos por registro: ${(totalDefectos / data.length).toFixed(2)}`]
         ];
 
@@ -1923,7 +2953,7 @@ const HallazgosManager = {
 
         // Crear nombre de archivo más descriptivo
         const fechaArchivo = new Date().toISOString().split('T')[0];
-        const nombreArchivo = `Reporte_Hallazgos_${tipo}_${fechaArchivo}.csv`;
+    const nombreArchivo = `Reporte_Registros_${tipo}_${fechaArchivo}.csv`;
 
         // Descargar archivo
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1964,6 +2994,7 @@ const HallazgosManager = {
             const scrapNoEnsamble = Utils.getElement('scrapNoEnsamble');
             const scrapPrecio = Utils.getElement('scrapPrecio');
             const scrapObservaciones = Utils.getElement('scrapObservaciones');
+            const scrapFecha = Utils.getElement('scrapFecha');
             
             if (scrapHallazgoId) scrapHallazgoId.value = hallazgoId;
             if (scrapModelo) {
@@ -1991,8 +3022,21 @@ const HallazgosManager = {
             }
             if (scrapObservaciones) {
                 scrapObservaciones.value = '';
-                scrapObservaciones.readOnly = false;
-                scrapObservaciones.style.backgroundColor = '';
+            }
+            if (scrapFecha) {
+                // Si el hallazgo ya tiene fecha_scrap en algún dato relacionado, úsala; si no, hoy
+                const today = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                const defaultDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+                // Intentar parsear fecha_scrap si viene en hallazgoData
+                let setDate = defaultDate;
+                if (hallazgoData?.fecha_scrap) {
+                    const d = new Date(hallazgoData.fecha_scrap);
+                    if (!isNaN(d)) {
+                        setDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+                    }
+                }
+                scrapFecha.value = setDate;
             }
             
             // Mostrar modal
@@ -2017,6 +3061,7 @@ const HallazgosManager = {
             const scrapNoEnsamble = Utils.getElement('scrapNoEnsamble');
             const scrapPrecio = Utils.getElement('scrapPrecio');
             const scrapObservaciones = Utils.getElement('scrapObservaciones');
+            const scrapFecha = Utils.getElement('scrapFecha');
             
             if (scrapHallazgoId) scrapHallazgoId.value = hallazgoId;
             if (scrapModelo) {
@@ -2039,6 +3084,11 @@ const HallazgosManager = {
                 scrapPrecio.focus();
             }
             if (scrapObservaciones) scrapObservaciones.value = '';
+            if (scrapFecha) {
+                const today = new Date();
+                const pad = (n) => String(n).padStart(2, '0');
+                scrapFecha.value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+            }
             
             const modal = new bootstrap.Modal(document.getElementById('scrapModal'));
             modal.show();
@@ -2063,19 +3113,46 @@ const HallazgosManager = {
             const scrapNoEnsamble = Utils.getElement('scrapNoEnsamble');
             const scrapPrecio = Utils.getElement('scrapPrecio');
             const scrapObservaciones = Utils.getElement('scrapObservaciones');
+            const scrapFecha = Utils.getElement('scrapFecha');
             
+            // Normalizador simple en cliente para asegurar formato ISO
+            const normalizeDate = (val) => {
+                if (!val) return '';
+                const s = String(val).trim();
+                // DD/MM/YYYY -> YYYY-MM-DD
+                const m1 = s.match(/^\d{2}\/\d{2}\/\d{4}$/);
+                if (m1) {
+                    const [d, m, y] = s.split('/');
+                    return `${y}-${m}-${d}`;
+                }
+                // YYYY-MM-DD o YYYY-MM
+                const m2 = s.match(/^\d{4}-(\d{2})(-(\d{2}))?$/);
+                if (m2) return s;
+                // Solo YYYY -> YYYY-01-01
+                const m3 = s.match(/^\d{4}$/);
+                if (m3) return `${s}-01-01`;
+                return s; // dejar tal cual; backend vuelve a normalizar
+            };
+
             const formData = {
                 hallazgo_id: scrapHallazgoId?.value || '',
                 modelo: scrapModelo?.value || '',
                 no_parte: scrapNoParte?.value || '',
                 no_ensamble: scrapNoEnsamble?.value || '',
                 precio: parseFloat(scrapPrecio?.value || '0'),
-                observaciones: scrapObservaciones?.value || ''
+                observaciones: scrapObservaciones?.value || '',
+                fecha_scrap: normalizeDate(scrapFecha?.value || '')
             };
 
             // Validar campos requeridos
             if (!formData.modelo || !formData.no_parte || !formData.no_ensamble || !formData.precio) {
                 NotificationManager.show('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+
+            // Validar observación seleccionada
+            if (!formData.observaciones) {
+                NotificationManager.show('Selecciona la observación del motivo de scrap', 'error');
                 return;
             }
 
@@ -2142,15 +3219,19 @@ const AppInitializer = {
     init() {
         console.log('Inicializando Admin Dashboard...');
 
-        // Configurar fechas por defecto
+        // Configurar fechas por defecto (si existen inputs)
         DateManager.setDefaultDates();
         DateManager.setMaxDateToToday();
 
-        // Cargar datos del dashboard
-        DashboardManager.loadDashboardData();
+        // Detectar si estamos en la página de dashboard (no en scrap_dashboard)
+        const isDashboardPage = Utils.elementExists('chartAreas') || Utils.elementExists('tablaRegistrosActivosBody');
 
-        // Configurar auto-refresh
-        setInterval(() => DashboardManager.refreshData(), AppConfig.AUTO_REFRESH_INTERVAL);
+        // Solo cargar y auto-refrescar el dashboard si estamos en la página correspondiente
+        if (isDashboardPage) {
+            DashboardManager.loadDashboardData();
+            // Auto-refresh desactivado a petición del usuario. Antes:
+            // setInterval(() => DashboardManager.refreshData(), AppConfig.AUTO_REFRESH_INTERVAL);
+        }
 
         // Configurar eventos de validación de fechas
         const fechaInicio = Utils.getElement('fechaInicio');
@@ -2163,8 +3244,8 @@ const AppInitializer = {
             fechaFin.addEventListener('change', DateManager.validateDateRange);
         }
 
-        // Inicializar sección de hallazgos si existe
-        if (Utils.elementExists('tablaRegistrosActivosBody')) {
+    // Inicializar sección de hallazgos si existe
+    if (Utils.elementExists('tablaRegistrosActivosBody')) {
             console.log('Tabla de hallazgos encontrada, inicializando...');
             HallazgosManager.initializeTableFilters();
             HallazgosManager.loadData();

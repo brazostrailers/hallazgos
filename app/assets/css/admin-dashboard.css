@@ -91,16 +91,16 @@ body {
 
 .chart-container {
     position: relative;
-    height: 300px;
+    height: 380px; /* antes 300px */
     margin-bottom: 1rem;
     background: #fff;
     border-radius: 8px;
-    padding: 15px;
+    padding: 25px 20px 15px 20px; /* más espacio arriba */
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .chart-container canvas {
-    max-height: 270px !important;
+    max-height: 350px !important; /* antes 270px */
 }
 
 /* Chart loading state */

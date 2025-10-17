@@ -9,7 +9,6 @@ const AppConfig = {
     ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     MAX_FILES: 10,
     SUBMIT_ENDPOINT: 'guardar_hallazgo_multiple.php',
-    TEST_ENDPOINT: 'test_form.php',
     VIBRATION_ENABLED: 'vibrate' in navigator,
     DEBUG_MODE: false, // Asegurar que debug esté OFF
     // Configuración específica para Android con archivos grandes
@@ -30,7 +29,8 @@ const AppData = {
         'Roladora': 1,
         'Vulcanizadora': 1,
         'soldadura': 17,
-        'ejes': 1
+        'ejes': 1,
+        'Diseño': 1
     },
 
     defectosPorArea: {
@@ -103,71 +103,56 @@ const AppData = {
             'Rin dañado',
             'Eje dañado',
             'Otros'
+        ],
+        'Diseño': [
+            'CAMBIO DE DISEÑO',
+            'CORRECCION DE DIBUJO',
+            'Otros'
         ]
     },
 
     ensambleModelo: {
-        "4-200-00410": "ED/SS, SUSPENSION, CENTERPOINT SPRING",
-        "4-100-00322": "ED, 32' X 48\"SW ROLLED BODY ASSY",
-        "4-600-10208": "ED, WELDING PART PKG",
-        "4-100-00330": "ED, 36' X 48\"SW ROLLED BODY ASSY",
-        "4-200-00008": "ED/SS 5TH WHEEL ASSY",
-        "4-200-00018": "32' ED, DRAFT ARM FRAME ASSY",
-        "4-200-00328": "ED, 48\"SW TAILGATE",
-        "4-200-00031": "28' ED, DRAFT ARM FRAME ASSY",
-        "4-100-00314": "ED, 28' X 48\"SW ROLLED BODY ASSY",
-        "4-200-00411": "ED, HYD. CYL. BOLTED PIVOT 28' & 36'",
-        "4-120-00001": "WHEEL/TIRE COMBO, 11R24.5\", STEEL",
-        "4-120-00002": "WHEEL/TIRE COMBO, 11R24.5\", ALUMINUM",
-        "4-200-00051": "36' ED, DRAFT ARM FRAME ASSY",
+        "4-100-00194": "62.5T 9'W LB NECK W/ FLIP",
+        "4-100-00188": "9'W LB LEVELING BOX",
+        "4-100-00196": "LB, 62.5T, 9'W, SUSPENSION FRAME ASSY",
+        "4-100-00195": "LB, 62.5T, 9'W, 30' WELL",
+        "4-100-00012": "55T LB LEVELING BOX",
+        "4-100-00007": "55T LB BED, 26' WELL",
+        "4-100-00008": "55T LB 9'1\" SUSPENSION FRAME, 8'6\"W",
+        "4-100-00014": "55T LB NECK",
         "4-100-00200": "LDDT, BED ASSY",
         "4-200-00416": "LDDT, FRAME",
-        "4-100-00195": "LB, 62.5T, 9'W, 30' WELL",
+        "4-200-00018": "32' ED, DRAFT ARM FRAME ASSY",
+        "4-200-00031": "28' ED, DRAFT ARM FRAME ASSY",
+        "4-200-00051": "36' ED, DRAFT ARM FRAME ASSY",
+        "4-200-00110": "SS, DRAFT ARM A-FRAME ASSY",
         "4-100-00358": "SS, 40' X 96SW, ROLLED BODY ASSY",
-        "4-100-00092": "48' FLAT BED MAIN BEAM",
-        "4-100-00196": "LB, 62.5T, 9'W, SUSPENSION FRAME ASSY",
-        "4-200-00475": "LB, 9'W, NECK/FLIP/LEVELING BOX ASSY",
-        "4-200-00071": "55T LB MID AXLE WHEEL COVE",
-        "4-200-00106": "55T LB ANGLED RA COVER PLATE",
-        "4-200-00407": "BD, FRONT WING BRACING ASSY",
-        "4-200-00409": "BD, REAR WING BRACING ASSY",
-        "4-200-00371": "BD, AIR SUSPENSION AND ATTACHMENT ASSY",
-        "4-600-10264": "BD, WELDING PART PKG",
-        "4-200-00385": "BD, 5TH WHEEL PLATE ASSY",
-        "4-100-00008": "55T LB 9'1\" SUSPENSION FRAME, 8'6\"W",
-        "4-200-00370": "BD, SPRING SUSPENSION AND ATTACHMENT ASSY",
+        "4-200-00408": "SS, 96\" SW TAILGATE ASSY",
+        "4-100-00314": "ED, 28' X 48\"SW ROLLED BODY ASSY",
+        "4-100-00322": "ED, 32' X 48\"SW ROLLED BODY ASSY",
+        "4-200-00328": "ED, 48\"SW TAILGATE",
         "4-200-00412": "BD, GATE ASSY",
-        "4-100-00007": "55T LB BED, 26' WELL",
-        "4-100-00144": "SD/LB, SUSPENSION, DS ARM & HANGER W/ BUSHING ASSY",
-        "4-100-00145": "SD/LB, SUSPENSION, PS ARM & HANGER W/ BUSHING ASSY",
-        "4-600-10356": "LB, WELD PART PKG",
         "4-200-00384": "BD, HOPPER ASSY",
-        "4-100-00013": "LB, NECK/LEVING BOX ASSY",
-        "4-100-00153": "SD/FB, SUSPENSION, SLIDEBOX W/ HANGERS ASSY",
-        "4-200-00069": "55T LB PS ANGLE WHEEL COVER",
         "4-200-00372": "BD, DS WALL ASSY",
         "4-200-00373": "BD, PS WALL ASSY",
-        "4-200-00070": "55T LB DS ANGLE WHEEL COVER",
+        "4-200-00008": "ED/SS 5TH WHEEL ASSY",
+        "4-200-00385": "BD, 5TH WHEEL PLATE ASSY",
+        "4-200-00371": "BD, AIR SUSPENSION AND ATTACHMENT ASSY",
+        "4-200-00370": "BD, SPRING SUSPENSION AND ATTACHMENT ASSY",
+        "4-100-00144": "SD/LB, SUSPENSION, DS ARM & HANGER W/ BUSHING ASSY",
+        "4-100-00145": "SD/LB, SUSPENSION, PS ARM & HANGER W/ BUSHING ASSY",
         "4-200-00314": "LB, SUSPENSION WISHBONE, DS ARM",
         "4-200-00315": "LB, SUSPENSION WISHBONE, PS ARM",
-        "4-100-00152": "FB/BD, SUSPENSION, DS ARM & HANGER W/ BUSHING ASSY",
-        "4-120-00010": "WHEEL/TIRE COMBO, 295/70R22.5\", ALUMINUM",
-        "4-100-00184": "SD, 53' MAIN BEAM, FLAT FRONT",
         "4-100-00151": "FB/BD, SUSPENSION, PS ARM & HANGER W/ BUSHING ASSY",
-        "4-120-00007": "WHEEL/TIRE COMBO, 275/70R22.5\", STEEL",
-        "4-600-10351": "SS, 40' X 96SW, WELD PART PKG",
-        "4-120-00003": "WHEEL/TIRE COMBO, 11R22.5\", STEEL",
-        "4-120-00009": "WHEEL/TIRE COMBO, 295/70R22.5\", STEEL",
-        "4-100-00185": "SD, 48' MAIN BEAM, FLAT FRONT",
-        "4-120-00005": "WHEEL/TIRE COMBO, 255/70R22.5\", STEEL",
-        "4-120-00004": "WHEEL/TIRE COMBO, 11R22.5\", ALUMINUM",
-        "4-120-00006": "WHEEL/TIRE COMBO, 255/70R22.5\", ALUMINUM",
-        "4-100-00197": "FB, 53' MAIN BEAM, 0* CAMBER ASSY",
-        "4-100-00081": "53' FLAT BED MAIN BEAM",
-        "4-100-00012": "55T LB LEVELING BOX",
-        "4-200-00225": "WELDED 55T LB, 28' WELL, DS OUTSIDE BEAM",
-        "4-200-00226": "WELDED 55T LB, 28' WELL, PS OUTSIDE BEAM",
-        "4-200-00227": "WELDED 55T LB, 28' WELL, MAIN BEAM"
+        "4-100-00152": "FB/BD, SUSPENSION, DS ARM & HANGER W/ BUSHING ASSY",
+        "4-200-00071": "55T LB MID AXLE WHEEL COVE",
+        "4-200-00106": "55T LB ANGLED RA COVER PLATE",
+        "4-200-00069": "55T LB PS ANGLE WHEEL COVER",
+        "4-200-00070": "55T LB DS ANGLE WHEEL COVER",
+        "4-200-00411": "ED, HYD. CYL. BOLTED PIVOT 28' & 36'",
+        "4-200-00407": "BD, FRONT WING BRACING ASSY",
+        "4-200-00409": "BD, REAR WING BRACING ASSY",
+        "4-200-00410": "ED/SS, SUSPENSION, CENTERPOINT SPRING"
     }
 };
 
@@ -218,6 +203,7 @@ class DOMManager {
             modelo: document.getElementById('modelo'),
             jobOrder: document.getElementById('job_order'),
             noParte: document.getElementById('no_parte'),
+            cantidad_piezas: document.getElementById('cantidad_piezas'),
             observaciones: document.getElementById('observaciones'),
             retrabajo: document.getElementById('retrabajo'),
             ensambles: document.getElementById('ensambles')
@@ -527,25 +513,53 @@ class FormManager {
 
     detectDevice() {
         const userAgent = navigator.userAgent;
+        // Detectar Android, iPad, iPhone, Samsung, tablet, etc.
         const isAndroid = /Android/.test(userAgent);
-        const isMobile = isAndroid; // Solo consideramos Android como móvil válido
-        
-        if (!isAndroid) {
-            console.warn('⚠️ Esta aplicación está optimizada para dispositivos Android');
-            // Mostrar aviso si no es Android
+        const isSamsungTablet = /Samsung|SM-T|SM-|GT-|Tab|Tablet|Galaxy S7/i.test(userAgent);
+        const isTablet = /Tablet|iPad|SM-T|GT-|Tab/i.test(userAgent);
+        const isMobile = /Android|iPad|iPhone|Samsung|SM-T|SM-|GT-|Tab|Tablet|Galaxy S7/i.test(userAgent);
+
+        if (!isMobile) {
+            console.warn('⚠️ Esta aplicación está optimizada para dispositivos móviles');
             this.showNonAndroidWarning();
         }
-        
-        console.log('Dispositivo detectado:', { 
-            isAndroid, 
-            isMobile, 
-            userAgent: userAgent.substring(0, 100) 
+
+        // Configuraciones específicas para tabletas - Reducir límites para evitar problemas de memoria
+        if (isTablet || isSamsungTablet) {
+            console.log('📱 Detectada tableta - Configurando límites optimizados');
+            AppConfig.MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB por archivo (más pequeño para tabletas)
+            AppConfig.MAX_FILES = 16; // Permitir 16 archivos como en celular
+            AppConfig.ANDROID_MAX_FILE_SIZE = 5 * 1024 * 1024;
+            AppConfig.ANDROID_MAX_TOTAL_SIZE = 80 * 1024 * 1024; // 80MB total
+            AppConfig.ANDROID_COMPRESSION_THRESHOLD = 3 * 1024 * 1024; // Comprimir más agresivamente
+            AppConfig.ANDROID_TARGET_SIZE = 1.5 * 1024 * 1024; // Target más pequeño
+            this.tabletMode = true;
+        } else if (isAndroid) {
+            console.log('📱 Detectado celular Android - Configurando límites estándar');
+            AppConfig.MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB por archivo
+            AppConfig.MAX_FILES = 16; // 16 archivos
+            AppConfig.ANDROID_MAX_FILE_SIZE = 10 * 1024 * 1024;
+            AppConfig.ANDROID_MAX_TOTAL_SIZE = 160 * 1024 * 1024; // 160MB total
+            AppConfig.ANDROID_COMPRESSION_THRESHOLD = 5 * 1024 * 1024;
+            AppConfig.ANDROID_TARGET_SIZE = 3 * 1024 * 1024;
+            this.tabletMode = false;
+        }
+
+        console.log('Dispositivo detectado:', {
+            isAndroid,
+            isSamsungTablet,
+            isTablet,
+            isMobile,
+            tabletMode: this.tabletMode,
+            userAgent: userAgent.substring(0, 100),
+            maxFileSize: AppConfig.MAX_FILE_SIZE,
+            maxFiles: AppConfig.MAX_FILES
         });
-        
-        this.deviceInfo = { isMobile: isAndroid, isAndroid };
-        
-        // Configuraciones específicas para Android
-        if (isAndroid) {
+
+        this.deviceInfo = { isMobile, isAndroid, isSamsungTablet, isTablet, tabletMode: this.tabletMode };
+
+        // Configuraciones específicas para Android y tabletas Samsung
+        if (isAndroid || isSamsungTablet) {
             this.configureForAndroid();
         }
     }
@@ -561,10 +575,16 @@ class FormManager {
     }
 
     configureForAndroid() {
-        console.log('🤖 Configurando optimizaciones para Android');
+        console.log('🤖 Configurando optimizaciones para Android/Tabletas');
         
-        // Timeout más largo para Android
-        this.androidTimeout = 45000; // 45 segundos
+        // Timeout ajustado según el tipo de dispositivo
+        if (this.tabletMode) {
+            this.androidTimeout = 30000; // 30 segundos para tabletas (menos que celulares)
+            console.log('📱 Modo tableta: timeout reducido a 30s');
+        } else {
+            this.androidTimeout = 45000; // 45 segundos para celulares
+            console.log('📱 Modo celular: timeout estándar 45s');
+        }
         
         // Configurar eventos táctiles optimizados
         this.setupAndroidTouchEvents();
@@ -574,6 +594,45 @@ class FormManager {
         
         // Verificar conectividad de red en Android
         this.setupAndroidNetworkChecks();
+        
+        // Configuraciones específicas para tabletas
+        if (this.tabletMode) {
+            this.setupTabletOptimizations();
+        }
+    }
+
+    setupTabletOptimizations() {
+        console.log('📱 Aplicando optimizaciones específicas para tabletas');
+        
+        // Limpiar memoria más frecuentemente en tabletas
+        setInterval(() => {
+            if (window.gc && typeof window.gc === 'function') {
+                try {
+                    window.gc();
+                } catch(e) {
+                    // Silent fail - gc() no siempre está disponible
+                }
+            }
+            
+            // Forzar limpieza de URLs de objetos no utilizadas
+            if (this.objectURLs) {
+                this.objectURLs.forEach(url => {
+                    try {
+                        URL.revokeObjectURL(url);
+                    } catch(e) {
+                        // Silent fail
+                    }
+                });
+                this.objectURLs = [];
+            }
+        }, 10000); // Cada 10 segundos
+        
+        this.objectURLs = [];
+        
+        // Configurar para procesar archivos uno a la vez en tabletas
+        this.tabletFileProcessingMode = true;
+        
+        console.log('✅ Optimizaciones de tableta configuradas');
     }
 
     setupAndroidNetworkChecks() {
@@ -719,14 +778,14 @@ class FormManager {
         if (this.isSubmitting) return;
         if (!this.validateForm()) return;
 
-        // Verificar conectividad en Android antes de enviar
-        if (this.deviceInfo?.isAndroid) {
+        // Verificar conectividad en Android/Tableta antes de enviar
+        if (this.deviceInfo?.isMobile) {
             if (!navigator.onLine) {
                 Utils.showAlert('📵 Sin conexión a internet. Verifica tu WiFi o datos móviles antes de continuar.');
                 return;
             }
             
-            console.log('🤖 Android: Verificando conectividad antes del envío...');
+            console.log(`🤖 ${this.tabletMode ? 'Tableta' : 'Móvil'}: Verificando conectividad antes del envío...`);
             const isConnected = await this.checkAndroidConnectivity();
             if (!isConnected) {
                 Utils.showAlert('🌐 Problema de conectividad detectado. Verifica tu conexión e intenta nuevamente.');
@@ -738,141 +797,89 @@ class FormManager {
         this.dom.setLoading(true);
 
         try {
-            // Usar FormData nativo del formulario para incluir TODOS los campos automáticamente
+            // Usar el mismo enfoque exitoso del botón test
             const form = document.getElementById('form-hallazgo');
             const formData = new FormData(form);
             
-            // Agregar los defectos seleccionados
+            // Agregar los defectos seleccionados  
             const selectedDefects = window.defectManager.getSelectedDefects();
             selectedDefects.forEach(defecto => {
                 formData.append('defectos[]', defecto);
             });
             
-            // Verificar tamaño de archivos antes de enviar (específico para Android)
+            // Procesar archivos usando la misma lógica exitosa del test
             const files = window.fileManager.getFiles();
-            let totalSize = 0;
             
             if (files.length > 0) {
-                console.log('🤖 Android: Verificando archivos antes del envío...');
+                console.log(`📱 ${this.tabletMode ? 'Tableta' : 'Celular'}: Procesando ${files.length} archivos con lógica del test exitoso...`);
                 
-                // Límites actualizados para tu caso de uso
-                const MAX_FILE_SIZE_ANDROID = AppConfig.ANDROID_MAX_FILE_SIZE; // 10MB por archivo
-                const MAX_TOTAL_SIZE_ANDROID = AppConfig.ANDROID_MAX_TOTAL_SIZE; // 100MB total
+                let processedSize = 0;
                 
-                console.log(`📏 Límites configurados:`);
-                console.log(`- Máximo por archivo: ${Utils.formatFileSize(MAX_FILE_SIZE_ANDROID)}`);
-                console.log(`- Máximo total: ${Utils.formatFileSize(MAX_TOTAL_SIZE_ANDROID)}`);
-                
-                const processedFiles = [];
-                
+                // Comprimir y agregar archivos exactamente como el test exitoso
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    console.log(`📁 Procesando archivo ${i + 1}: ${file.name} - ${Utils.formatFileSize(file.size)}`);
-                    
                     let processedFile = file;
                     
-                    // Comprimir automáticamente si es mayor al umbral
-                    if (file.type.startsWith('image/') && file.size > AppConfig.ANDROID_COMPRESSION_THRESHOLD) {
-                        console.log(`🔄 Archivo grande detectado (${Utils.formatFileSize(file.size)}), comprimiendo...`);
-                        
+                    // Usar la misma lógica de compresión del test exitoso (5MB threshold, 4MB target)
+                    if (file.type.startsWith('image/') && file.size > 5 * 1024 * 1024) {
+                        console.log(`🔄 Comprimiendo ${file.name} con método del test exitoso...`);
                         try {
-                            // Mostrar mensaje al usuario sobre la compresión
-                            if (i === 0) { // Solo mostrar una vez
-                                console.log('� Comprimiendo fotos grandes para Android...');
-                            }
-                            
-                            processedFile = await this.compressImageForAndroid(file, AppConfig.ANDROID_TARGET_SIZE);
+                            processedFile = await this.compressImageForDevice(file, 4 * 1024 * 1024);
                             const reduction = ((file.size - processedFile.size) / file.size * 100).toFixed(1);
-                            console.log(`✅ Compresión exitosa: ${Utils.formatFileSize(file.size)} → ${Utils.formatFileSize(processedFile.size)} (${reduction}% reducción)`);
-                        } catch (compressError) {
-                            console.warn('⚠️ No se pudo comprimir automáticamente:', compressError.message);
-                            // Si falla la compresión, verificar si el archivo original es aceptable
-                            if (file.size > MAX_FILE_SIZE_ANDROID) {
-                                throw new Error(`El archivo "${file.name}" es muy grande (${Utils.formatFileSize(file.size)}) y no se pudo comprimir.\n\n🤖 Límite Android: ${Utils.formatFileSize(MAX_FILE_SIZE_ANDROID)} por archivo.\n\n💡 Sugerencias:\n• Toma la foto con menor resolución\n• Usa una app de compresión externa\n• Reduce la calidad en la cámara`);
-                            }
+                            console.log(`✅ ${file.name}: ${Utils.formatFileSize(file.size)} → ${Utils.formatFileSize(processedFile.size)} (${reduction}% reducción)`);
+                        } catch (error) {
+                            console.warn(`⚠️ Error comprimiendo ${file.name}:`, error.message);
+                            processedFile = file; // Usar original si falla compresión
                         }
                     }
                     
-                    // Verificar tamaño final después de compresión
-                    if (processedFile.size > MAX_FILE_SIZE_ANDROID) {
-                        throw new Error(`El archivo "${file.name}" sigue siendo muy grande después de compresión (${Utils.formatFileSize(processedFile.size)}).\n\n🤖 Límite Android: ${Utils.formatFileSize(MAX_FILE_SIZE_ANDROID)} por archivo.\n\n💡 Sugerencias:\n• Usa menor resolución en la cámara\n• Comprime manualmente antes de subir\n• Divide en varios envíos`);
-                    }
-                    
-                    processedFiles.push(processedFile);
-                    totalSize += processedFile.size;
-                    
-                    // Agregar archivo al FormData
+                    processedSize += processedFile.size;
                     formData.append('evidencias[]', processedFile);
+                    console.log(`📁 Archivo ${i + 1}: ${processedFile.name} (${Utils.formatFileSize(processedFile.size)})`);
                 }
                 
-                console.log(`📊 Resumen final:`);
-                console.log(`- Archivos procesados: ${processedFiles.length}`);
-                console.log(`- Tamaño total: ${Utils.formatFileSize(totalSize)}`);
-                console.log(`- Promedio por archivo: ${Utils.formatFileSize(totalSize / processedFiles.length)}`);
-                
-                // Verificar tamaño total
-                if (totalSize > MAX_TOTAL_SIZE_ANDROID) {
-                    throw new Error(`El tamaño total de archivos (${Utils.formatFileSize(totalSize)}) excede el límite.\n\n🤖 Límite Android: ${Utils.formatFileSize(MAX_TOTAL_SIZE_ANDROID)} total.\n\n💡 Soluciones:\n• Los archivos se comprimen automáticamente pero aún son muy grandes\n• Intenta con fotos de menor resolución\n• Envía en grupos más pequeños (5 fotos por vez)\n• Usa menor calidad en la cámara`);
-                }
+                console.log(`📤 Total procesado con lógica del test: ${Utils.formatFileSize(processedSize)}`);
             } else {
-                throw new Error('Se requiere al menos una foto de evidencia.');
+                // No hay archivos seleccionados; continuar con el envío sin evidencias
+                console.log('ℹ️ Envío sin fotos de evidencia (opcional).');
             }
             
-            console.log('🤖 Android - FormData contents:');
-            for (let [key, value] of formData.entries()) {
-                if (value instanceof File) {
-                    console.log(`${key}: [File] ${value.name} (${Utils.formatFileSize(value.size)})`);
-                } else {
-                    console.log(`${key}: ${value}`);
-                }
-            }
-
-            // Headers optimizados específicamente para Android con compatibilidad mejorada
-            const fetchOptions = {
+            // Usar exactamente los mismos headers del test exitoso pero SIN modo test
+            const startTime = Date.now();
+            const response = await fetch(AppConfig.SUBMIT_ENDPOINT, {
                 method: 'POST',
                 body: formData,
-                headers: { 
+                headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-Android-App': 'HallazgosQuality',
-                    'X-Android-Version': navigator.userAgent.substring(0, 100), // Limitar tamaño del header
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Accept': 'application/json, text/plain, */*'
-                    // NO incluir Content-Type - let FormData set it automatically con boundary
-                },
-                cache: 'no-cache',
-                credentials: 'same-origin',
-                mode: 'cors',
-                redirect: 'follow',
-                // Configuraciones específicas mejoradas para Android
-                keepalive: false, // Evitar problemas con conexiones persistentes
-                referrerPolicy: 'strict-origin-when-cross-origin'
-            };
-
-            // Timeout ajustado para archivos grandes (más tiempo para 10 fotos de 5MB)
-            const timeoutMs = this.deviceInfo?.isAndroid ? 60000 : 45000; // 60 segundos para Android con archivos grandes
-            const endpoint = AppConfig.DEBUG_MODE ? AppConfig.TEST_ENDPOINT : AppConfig.SUBMIT_ENDPOINT;
-            
-            console.log(`🤖 Enviando desde Android a: ${endpoint} (Debug mode: ${AppConfig.DEBUG_MODE})`);
-            console.log(`🤖 Timeout configurado: ${timeoutMs}ms`);
-            console.log(`🤖 Archivos a enviar: ${files.length}, Tamaño total: ${Utils.formatFileSize(totalSize)}`);
-            
-            // Mostrar progreso específico para Android con archivos grandes
-            if (this.deviceInfo?.isAndroid) {
-                if (totalSize > 20 * 1024 * 1024) { // Más de 20MB
-                    console.log('📤 Envío grande detectado - esto puede tomar 30-60 segundos...');
-                } else if (totalSize > 10 * 1024 * 1024) { // Más de 10MB
-                    console.log('📤 Archivo mediano detectado - esto puede tomar 15-30 segundos...');
+                    'X-Android-App': 'HallazgosQuality'
                 }
-            }
+            });
             
-            const response = await this.fetchWithTimeoutAndRetry(endpoint, fetchOptions, timeoutMs);
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(1);
+            
+            console.log(`📱 Response status: ${response.status}`);
+            console.log(`⏱️ Tiempo de envío: ${duration} segundos`);
 
             if (!response.ok) {
+                // Capturar el texto de la respuesta para debug
+                const errorText = await response.text();
+                console.error('❌ Error response text:', errorText.substring(0, 500));
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const result = await response.json();
+            // Capturar la respuesta como texto primero para debug
+            const responseText = await response.text();
+            console.log('📱 Raw response text:', responseText.substring(0, 200));
+            
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (jsonError) {
+                console.error('❌ Error parseando JSON:', jsonError.message);
+                console.error('❌ Response que causó el error:', responseText.substring(0, 1000));
+                throw new Error(`Error parseando respuesta del servidor. Respuesta: ${responseText.substring(0, 200)}`);
+            }
 
             if (result.success) {
                 this.handleSubmitSuccess(result);
@@ -898,7 +905,14 @@ class FormManager {
             } else if (error.message.includes('HTTP error')) {
                 const statusMatch = error.message.match(/status: (\d+)/);
                 const status = statusMatch ? statusMatch[1] : 'desconocido';
-                errorMessage = `🔧 Error del servidor (HTTP ${status}).\n\n💡 Significado:\n• 413: Archivo muy grande para el servidor\n• 500: Error interno del servidor\n• 502/503: Servidor sobrecargado\n• 408: Timeout del servidor\n\n🔧 Soluciones:\n• Reduce el tamaño de las fotos\n• Intenta con menos fotos\n• Espera unos minutos y reintenta`;
+                
+                if (status === '500') {
+                    errorMessage = `� Error del servidor (HTTP ${status}).\n\n💡 Error interno del servidor.\n\n🔧 Soluciones:\n• Intenta nuevamente en unos minutos\n• Reduce el número de archivos\n• Contacta al administrador si persiste`;
+                } else if (status === '413' || status === '502' || status === '503' || status === '408') {
+                    errorMessage = `🔧 Error del servidor (HTTP ${status}).\n\n💡 Significado:\n• 413: Archivo muy grande para el servidor\n• 500: Error interno del servidor\n• 502/503: Servidor sobrecargado\n• 408: Timeout del servidor\n\n🔧 Soluciones:\n• Reduce el tamaño de las fotos\n• Intenta con menos fotos\n• Espera unos minutos y reintenta`;
+                } else {
+                    errorMessage = `🚨 Error del servidor (${status})\n\n💻 Error interno del sistema.\n\n🔧 Soluciones:\n• Intenta nuevamente en unos minutos\n• Reduce el número de archivos\n• Contacta al administrador si persiste`;
+                }
             } else if (error.message.includes('NetworkError') || error.message.includes('network')) {
                 errorMessage = '🔌 Error de red específico de Android.\n\n💡 Los tests básicos pasan pero el formulario completo falla.\n\nEsto indica:\n• Problema con archivos grandes en Android\n• Límites del navegador móvil\n• Configuración de red restrictiva\n\n🔧 Soluciones probadas:\n• Fotos muy pequeñas (menos de 1MB)\n• Solo 1 foto por vez\n• Comprobar permisos de la app\n• Limpiar caché del navegador\n• Usar Chrome en modo incógnito';
             } else if (error.message.includes('JSON') || error.message.includes('parse')) {
@@ -915,24 +929,25 @@ class FormManager {
         }
     }
 
-    // Método para comprimir imágenes automáticamente en Android - Versión mejorada
-    async compressImageForAndroid(file, targetSizeBytes = AppConfig.ANDROID_TARGET_SIZE) {
+    // Método para comprimir imágenes automáticamente en Android/Tabletas - Versión mejorada
+    async compressImageForDevice(file, targetSizeBytes = AppConfig.ANDROID_TARGET_SIZE) {
         return new Promise((resolve, reject) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
             
             img.onload = function() {
-                // Calcular nuevas dimensiones basadas en el tamaño objetivo
+                // Calcular nuevas dimensiones basadas en el tamaño objetivo y tipo de dispositivo
                 let { width, height } = img;
                 const originalSize = file.size;
                 
                 // Calcular factor de reducción basado en el tamaño del archivo
                 let reductionFactor = Math.sqrt(targetSizeBytes / originalSize);
                 
-                // Límites de dimensiones
-                const maxDimension = 2048; // Aumentado para mejor calidad
-                const minDimension = 800;   // Mínimo para mantener calidad
+                // Límites de dimensiones ajustados para tabletas
+                const isTabletMode = window.formManager?.tabletMode;
+                const maxDimension = isTabletMode ? 1600 : 2048; // Menor para tabletas
+                const minDimension = isTabletMode ? 600 : 800;   // Menor para tabletas
                 
                 // Aplicar reducción
                 let newWidth = Math.floor(width * reductionFactor);
@@ -970,8 +985,11 @@ class FormManager {
                 // Dibujar imagen redimensionada
                 ctx.drawImage(img, 0, 0, newWidth, newHeight);
                 
-                // Función para intentar diferentes calidades
-                const tryCompress = (quality = 0.8) => {
+                // Función para intentar diferentes calidades - más agresiva para tabletas
+                const initialQuality = isTabletMode ? 0.6 : 0.8;
+                const minQuality = isTabletMode ? 0.2 : 0.3;
+                
+                const tryCompress = (quality = initialQuality) => {
                     canvas.toBlob((blob) => {
                         if (blob) {
                             const compressedFile = new File([blob], file.name, {
@@ -979,11 +997,11 @@ class FormManager {
                                 lastModified: Date.now()
                             });
                             
-                            console.log(`🎯 Compresión: ${Utils.formatFileSize(originalSize)} → ${Utils.formatFileSize(blob.size)} (calidad: ${Math.round(quality * 100)}%)`);
+                            console.log(`🎯 Compresión ${isTabletMode ? 'tableta' : 'celular'}: ${Utils.formatFileSize(originalSize)} → ${Utils.formatFileSize(blob.size)} (calidad: ${Math.round(quality * 100)}%)`);
                             
                             // Si aún es muy grande y podemos reducir más la calidad
-                            if (blob.size > targetSizeBytes && quality > 0.3) {
-                                console.log(`📉 Archivo aún grande, reduciendo calidad...`);
+                            if (blob.size > targetSizeBytes && quality > minQuality) {
+                                console.log(`📉 Archivo aún grande para ${isTabletMode ? 'tableta' : 'celular'}, reduciendo calidad...`);
                                 tryCompress(quality - 0.1);
                             } else {
                                 resolve(compressedFile);
@@ -1102,13 +1120,20 @@ class FormManager {
             isValid = false;
         }
 
-        if (!window.fileManager.hasFiles()) {
-            this.dom.get('fileError').style.display = 'block';
-            this.dom.get('fileError').textContent = 'Por favor agrega al menos una foto';
-            isValid = false;
-        } else {
-            this.dom.get('fileError').style.display = 'none';
+        // Validación específica para cantidad de piezas
+        const cantidadPiezas = document.getElementById('cantidad_piezas');
+        if (cantidadPiezas) {
+            const valor = parseInt(cantidadPiezas.value);
+            if (isNaN(valor) || valor < 1) {
+                cantidadPiezas.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                cantidadPiezas.classList.remove('is-invalid');
+            }
         }
+
+        // Las fotos ahora son OPCIONALES - removida validación obligatoria
+        this.dom.get('fileError').style.display = 'none';
 
         if (!window.defectManager.hasSelectedDefects()) {
             this.dom.get('defectError').style.display = 'block';
@@ -1145,6 +1170,7 @@ class FormManager {
             { id: 'area', name: 'area' },
             { id: 'modelo', name: 'modelo' },
             { id: 'noParte', name: 'no_parte' },
+            { id: 'cantidad_piezas', name: 'cantidad_piezas' },
             { id: 'observaciones', name: 'observaciones' },
             { id: 'retrabajo', name: 'retrabajo' }
         ];
@@ -1346,9 +1372,9 @@ window.testAndroidFormWithFiles = async function() {
     try {
         // Verificar si hay archivos seleccionados
         const files = window.fileManager.getFiles();
+        // Si no hay archivos, también permitimos la prueba sin adjuntos
         if (!files || files.length === 0) {
-            alert('❌ Primero selecciona al menos una foto en el formulario\n\nEste test probará el envío con archivos reales pero sin guardar en la base de datos.');
-            return;
+            alert('ℹ️ No seleccionaste fotos. Se realizará la prueba de envío SIN archivos.');
         }
         
         // Mostrar información sobre los archivos
@@ -1360,10 +1386,10 @@ window.testAndroidFormWithFiles = async function() {
             return `${index + 1}. ${file.name} (${Utils.formatFileSize(file.size)})`;
         }).join('\n');
         
-        const avgSize = totalSize / files.length;
+    const avgSize = files.length > 0 ? totalSize / files.length : 0;
         
         console.log(`📊 Análisis de archivos antes del test:`);
-        console.log(`- Total archivos: ${files.length}`);
+    console.log(`- Total archivos: ${files.length}`);
         console.log(`- Tamaño total: ${Utils.formatFileSize(totalSize)}`);
         console.log(`- Tamaño promedio: ${Utils.formatFileSize(avgSize)}`);
         console.log(`- Archivos > 5MB: ${largeFiles}`);

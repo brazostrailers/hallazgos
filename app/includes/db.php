@@ -22,6 +22,14 @@ while ($retry_count < $max_retries && $mysqli === null) {
         // Configurar charset para evitar problemas con caracteres especiales
         $mysqli->set_charset("utf8");
         
+        // También crear conexión PDO para scripts que la necesiten
+        $dsn = "mysql:host=$host;dbname=$db;charset=utf8";
+        $pdo = new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
+        
         // Verificar que la base de datos existe
         $result = $mysqli->query("SELECT DATABASE() as db_name");
         if ($result) {
