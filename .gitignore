@@ -43,3 +43,14 @@ node_modules/
 # Archivos de backup
 *.bak
 *.backup
+*backup*.php
+
+# Archivos de debug y test
+*debug*.php
+*test*.php
+debug_*.php
+test_*.php
+
+# Archivos SQL temporales o de migración antigua
+hallazgos*.sql
+*_old.sql
